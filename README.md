@@ -12,3 +12,5 @@ In Finder, open this repo and double-click:
 If macOS warns the script is from an unidentified developer, **right-click → Open** once, then confirm.
 
 Requires **Node.js** / `npm` on your PATH (or **nvm** in the default location at `~/.nvm`).
+
+If you see **`Error: EPERM: operation not permitted, uv_cwd`** when npm runs, the launchers already avoid that by running npm from `/tmp` with `--prefix` (common fix when the repo lives on **Desktop** and macOS restricts directory access for Terminal). If problems persist, grant **Full Disk Access** to **Terminal** (System Settings → Privacy & Security → Full Disk Access).
