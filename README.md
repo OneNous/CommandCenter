@@ -1,6 +1,6 @@
 # CommandCenter
 
-CoilShield / ICCP companion apps: **Electron desktop** (SSH, port-forward, `iccp` over SSH) and **design-mobile** (Vite + React design canvas + ArtSky).
+CoilShield / ICCP companion apps: **Electron desktop** (SSH, port-forward, `iccp` over SSH) and **design-mobile** (Vite + React — production **mobile app** plus optional **design canvas**; Capacitor iOS/Android).
 
 ## Desktop ↔ ICCP Pi
 
@@ -13,7 +13,10 @@ From a terminal, first-time install in `desktop/`: `npm install --legacy-peer-de
 In Finder, open this repo and double-click:
 
 - **`Launch Command Center.command`** — installs `desktop/` deps if needed, then runs the Electron app (`npm run dev`).
-- **`Launch Design Canvas.command`** — same for the Vite design canvas in `design-mobile/`.
+- **`Launch Mobile App.command`** — installs `design-mobile/` deps if needed, then runs the **app shell** (login + tabs) in the browser.
+- **`Launch Design Canvas.command`** — runs the **design canvas** in `design-mobile/` (artboards + tweaks): `npm run dev:design`.
+
+Details: **`design-mobile/README.md`**.
 
 If macOS warns the script is from an unidentified developer, **right-click → Open** once, then confirm.
 

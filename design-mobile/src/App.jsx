@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { DesignCanvas, DCSection, DCArtboard } from './lib/DesignCanvas.jsx'
-import { ArtSky } from './lib/ArtSky.jsx'
-import { BottomTabs, DashboardScreen, LoginScreen, ReportsScreen, SettingsScreen } from './lib/screens.jsx'
+import { applyDesignAppearance, LoginScreen } from './lib/screens.jsx'
 import { IOSDevice } from './lib/iOS.jsx'
+import { buildSkyProps, PhoneShell, useApplyTheme } from './lib/phone-shell.jsx'
 import {
   TweakRadio,
   TweakSection,
@@ -31,51 +31,19 @@ const TWEAK_DEFAULTS = {
   cardOpacity: 65,
   accent: 'sky',
   channelCount: 4,
+  /** Shop / v77 `white-ice-blue` + light `T` tokens (same as production mobile “Light appearance”). */
+  lightAppearance: false,
 }
 
-const ACCENTS = {
-  sky: { accent: '#7dd3fc', accentS: '#38bdf8', accentSoft: 'rgba(56,189,248,0.14)' },
-  emerald: { accent: '#6ee7b7', accentS: '#34d399', accentSoft: 'rgba(52,211,153,0.14)' },
-  violet: { accent: '#c4b5fd', accentS: '#a78bfa', accentSoft: 'rgba(167,139,250,0.16)' },
-  amber: { accent: '#fcd34d', accentS: '#f59e0b', accentSoft: 'rgba(245,158,11,0.16)' },
-}
-
-function PhoneShell({ platform, initialTab = 'dash', sky }) {
-  const [tab, setTab] = useState(initialTab)
-  useEffect(() => {
-    setTab(initialTab)
-  }, [initialTab])
-  const screen =
-    tab === 'dash' ? (
-      <DashboardScreen />
-    ) : tab === 'trends' ? (
-      <ReportsScreen />
-    ) : tab === 'settings' ? (
-      <SettingsScreen />
-    ) : (
-      <DashboardScreen />
-    )
-
+function IOSPhone({ tab = 'dash', sky, shellBg, deviceDark }) {
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: '#05070a' }}>
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-        <ArtSky {...sky} />
-      </div>
-      <div style={{ position: 'absolute', inset: 0, zIndex: 1, overflow: 'auto' }}>{screen}</div>
-      <BottomTabs tab={tab} setTab={setTab} platform={platform} />
-    </div>
-  )
-}
-
-function IOSPhone({ tab = 'dash', sky }) {
-  return (
-    <IOSDevice width={390} height={844} dark>
-      <PhoneShell platform="ios" initialTab={tab} sky={sky} />
+    <IOSDevice width={390} height={844} dark={deviceDark}>
+      <PhoneShell key={tab} platform="ios" initialTab={tab} sky={sky} shellBg={shellBg} />
     </IOSDevice>
   )
 }
 
-function AndroidShell({ children }) {
+function AndroidShell({ children, chromeBg = '#05070a' }) {
   return (
     <div
       style={{
@@ -83,7 +51,7 @@ function AndroidShell({ children }) {
         height: 844,
         borderRadius: 18,
         overflow: 'hidden',
-        background: '#05070a',
+        background: chromeBg,
         border: `8px solid rgba(116,119,117,0.45)`,
         boxShadow: '0 30px 80px rgba(0,0,0,0.5)',
         display: 'flex',
@@ -133,67 +101,48 @@ function AndroidShell({ children }) {
   )
 }
 
-function AndroidPhone({ tab = 'dash', sky }) {
+function AndroidPhone({ tab = 'dash', sky, shellBg, chromeBg }) {
   return (
-    <AndroidShell>
-      <PhoneShell platform="android" initialTab={tab} sky={sky} />
+    <AndroidShell chromeBg={chromeBg}>
+      <PhoneShell key={tab} platform="android" initialTab={tab} sky={sky} shellBg={shellBg} />
     </AndroidShell>
   )
 }
 
-function IOSLogin({ sky }) {
+function IOSLogin({ sky, deviceDark }) {
   return (
-    <IOSDevice width={390} height={844} dark>
+    <IOSDevice width={390} height={844} dark={deviceDark}>
       <LoginScreen sky={sky} />
     </IOSDevice>
   )
 }
 
-function AndroidLogin({ sky }) {
+function AndroidLogin({ sky, chromeBg }) {
   return (
-    <AndroidShell>
+    <AndroidShell chromeBg={chromeBg}>
       <LoginScreen sky={sky} />
     </AndroidShell>
   )
 }
 
-function useApplyTheme(t) {
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.CS_T) return
-    const a = ACCENTS[t.accent] || ACCENTS.sky
-    window.CS_T.accent = a.accent
-    window.CS_T.accentS = a.accentS
-    window.CS_T.accentSoft = a.accentSoft
-    window.CS_T.ch[0] = a.accent
-    const o = t.cardOpacity / 100
-    window.CS_T.surface = `rgba(11,15,20,${o})`
-    window.CS_T.surfaceUp = `rgba(18,25,34,${o})`
-    window.CS_T.surfaceMax = `rgba(26,36,49,${o})`
-    window.CS_T.cardBg = `rgba(12,18,24,${o})`
-    window.CS_T.cardBgFault = `rgba(60,12,24,${o})`
-  }, [t.accent, t.cardOpacity])
-}
-
 export default function App() {
   const [t, setT] = useTweaks(TWEAK_DEFAULTS)
-  useApplyTheme(t)
+  const appearance = t.lightAppearance ? 'light' : 'dark'
+  applyDesignAppearance(appearance)
+  useApplyTheme(t.accent, t.cardOpacity, appearance)
 
   const showIOS = t.platforms === 'both' || t.platforms === 'ios'
   const showAndroid = t.platforms === 'both' || t.platforms === 'android'
 
-  const sky = {
-    theme: t.skyTheme,
-    speed: t.skySpeed / 100,
-    zoom: t.skyZoom / 100,
-    warpPower: t.skyWarp / 1000,
-    windSpeed: t.skyWind / 1000,
-    fbmStrength: t.skyFbm / 100,
-    blurRadius: t.skyBlur / 100,
-    grainStrength: t.skyGrain / 1000,
-    blackVeil: t.blackVeil / 100,
-  }
+  const sky = buildSkyProps({
+    ...t,
+    skyThemeOverride: t.lightAppearance ? 'white-ice-blue' : undefined,
+  })
+  const shellBg = t.lightAppearance ? '#eef4f9' : '#05070a'
+  const androidChromeBg = t.lightAppearance ? '#eef4f9' : '#05070a'
+  const deviceDark = !t.lightAppearance
 
-  const vk = `${t.accent}-${t.cardOpacity}-${t.skyTheme}-${t.channelCount}`
+  const vk = `${t.accent}-${t.cardOpacity}-${t.skyTheme}-${t.channelCount}-${appearance}`
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.FIXTURE) return
@@ -208,12 +157,12 @@ export default function App() {
       <DCSection key="login" id="login" title="Login / onboarding">
         {showIOS && (
           <DCArtboard id="ios-login" label="iOS · Sign in" width={390} height={844}>
-            <IOSLogin sky={sky} />
+            <IOSLogin sky={sky} deviceDark={deviceDark} />
           </DCArtboard>
         )}
         {showAndroid && (
           <DCArtboard id="android-login" label="Android · Sign in" width={390} height={844}>
-            <AndroidLogin sky={sky} />
+            <AndroidLogin sky={sky} chromeBg={androidChromeBg} />
           </DCArtboard>
         )}
       </DCSection>,
@@ -224,12 +173,12 @@ export default function App() {
       <DCSection key="dash" id="dash" title="Dashboard / live">
         {showIOS && (
           <DCArtboard id="ios-dash" label="iOS · Live" width={390} height={844}>
-            <IOSPhone tab="dash" sky={sky} />
+            <IOSPhone tab="dash" sky={sky} shellBg={shellBg} deviceDark={deviceDark} />
           </DCArtboard>
         )}
         {showAndroid && (
           <DCArtboard id="android-dash" label="Android · Live" width={390} height={844}>
-            <AndroidPhone tab="dash" sky={sky} />
+            <AndroidPhone tab="dash" sky={sky} shellBg={shellBg} chromeBg={androidChromeBg} />
           </DCArtboard>
         )}
       </DCSection>,
@@ -240,12 +189,12 @@ export default function App() {
       <DCSection key="trends" id="trends" title="Reports / trends">
         {showIOS && (
           <DCArtboard id="ios-trends" label="iOS · Trends" width={390} height={844}>
-            <IOSPhone tab="trends" sky={sky} />
+            <IOSPhone tab="trends" sky={sky} shellBg={shellBg} deviceDark={deviceDark} />
           </DCArtboard>
         )}
         {showAndroid && (
           <DCArtboard id="android-trends" label="Android · Trends" width={390} height={844}>
-            <AndroidPhone tab="trends" sky={sky} />
+            <AndroidPhone tab="trends" sky={sky} shellBg={shellBg} chromeBg={androidChromeBg} />
           </DCArtboard>
         )}
       </DCSection>,
@@ -256,12 +205,12 @@ export default function App() {
       <DCSection key="settings" id="settings" title="Settings / profile">
         {showIOS && (
           <DCArtboard id="ios-settings" label="iOS · Settings" width={390} height={844}>
-            <IOSPhone tab="settings" sky={sky} />
+            <IOSPhone tab="settings" sky={sky} shellBg={shellBg} deviceDark={deviceDark} />
           </DCArtboard>
         )}
         {showAndroid && (
           <DCArtboard id="android-settings" label="Android · Settings" width={390} height={844}>
-            <AndroidPhone tab="settings" sky={sky} />
+            <AndroidPhone tab="settings" sky={sky} shellBg={shellBg} chromeBg={androidChromeBg} />
           </DCArtboard>
         )}
       </DCSection>,
@@ -300,6 +249,11 @@ export default function App() {
         </TweakSection>
 
         <TweakSection label="Theme">
+          <TweakToggle
+            label="Light appearance (shop sky + UI)"
+            value={t.lightAppearance}
+            onChange={(v) => setT('lightAppearance', v)}
+          />
           <TweakRadio
             label="Accent"
             value={t.accent}
@@ -330,6 +284,7 @@ export default function App() {
               { value: 'frost', label: 'Frost' },
               { value: 'holo', label: 'Holo' },
               { value: 'synthwave', label: 'Synthwave' },
+              { value: 'white-ice-blue', label: 'White ice blue (v77 shop)' },
             ]}
             onChange={(v) => setT('skyTheme', v)}
           />

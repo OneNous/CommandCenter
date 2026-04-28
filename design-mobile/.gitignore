@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Capacitor native shells (generate with: npx cap add ios && npx cap add android)
+ios/App/Pods
+ios/App/build
+android/app/build
+android/.gradle
+android/build

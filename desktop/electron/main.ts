@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
+import type { ClientChannel } from 'ssh2'
 import { join } from 'node:path'
 import { SSHManager } from './ssh/SSHManager'
 import { PortForward } from './ssh/PortForward'
@@ -14,9 +15,9 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1240,
     height: 800,
-    backgroundColor: '#0b0f14',
+    backgroundColor: '#05070a',
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/preload.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
@@ -47,15 +48,30 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   void tunnel.stop()
   void ssh.disconnect()
+  activeProfile = null
 })
 
-ipcMain.handle('profiles:get', () => ({
-  profiles: appStore.get('profiles') as ConnectionProfile[],
-  activeProfileId: appStore.get('activeProfileId'),
-}))
+function migrateProfile(raw: unknown): ConnectionProfile {
+  const out = { ...(raw as Record<string, unknown>) }
+  if (typeof out.remoteDashboardPort !== 'number' && typeof out.remotePort === 'number') {
+    out.remoteDashboardPort = out.remotePort
+  }
+  delete out.remotePort
+  return out as unknown as ConnectionProfile
+}
+
+ipcMain.handle('profiles:get', () => {
+  const raw = appStore.get('profiles') as unknown[]
+  const profiles = Array.isArray(raw) ? raw.map(migrateProfile) : []
+  return {
+    profiles,
+    activeProfileId: appStore.get('activeProfileId'),
+  }
+})
 
 ipcMain.handle('profiles:set', (_e, payload: { profiles: ConnectionProfile[]; activeProfileId: string | null }) => {
-  appStore.set('profiles', payload.profiles)
+  const cleaned = payload.profiles.map((p) => migrateProfile(p as unknown))
+  appStore.set('profiles', cleaned)
   appStore.set('activeProfileId', payload.activeProfileId)
   return { ok: true as const }
 })
@@ -74,6 +90,7 @@ ipcMain.handle('ssh:connect', async (_evt, params: SshConnectParams) => {
 ipcMain.handle('ssh:disconnect', async () => {
   await tunnel.stop()
   await ssh.disconnect()
+  activeProfile = null
   return { ok: true }
 })
 
@@ -104,7 +121,7 @@ ipcMain.handle('ssh:exec', async (evt, req: ExecRequest) => {
   let stdout = ''
   let stderr = ''
   const result: ExecResult = await new Promise((resolve, reject) => {
-    client.exec(command, (err, stream) => {
+    client.exec(command, (err: Error | undefined, stream: ClientChannel) => {
       if (err) return reject(err)
 
       stream.on('data', (buf: Buffer) => {

@@ -44,7 +44,8 @@ export type ConnectionProfile = {
   username: string
   auth: SshAuth
   remoteDashboardHost: string
-  remotePort: number
+  /** Dashboard listen port on the Pi (forward target), e.g. 8080 for `iccp dashboard`. */
+  remoteDashboardPort: number
   /** Optional `KEY=value` lines applied before remote `iccp` / `systemctl` commands. */
   remoteEnvLines?: string[]
 }

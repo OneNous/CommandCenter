@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import { Fragment } from 'react'
 
 /** iOS 26–style status bar (no assets). */
 export function IOSStatusBar({ dark = false, time = '9:41' }) {

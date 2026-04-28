@@ -16,6 +16,24 @@ export const ARTSKY_PALETTES = {
   synthwave: ['#0a0218', '#16082e', '#32145c', '#6b1a8f', '#ff2d9a', '#ffd6f7'],
 }
 
+/** v77 shop / `ARTSKY_DEMO_LIGHT_VARIANTS` ice-blue — same bloop as `@data/artsky-live-themes` whiteIceBlueBloopTheme */
+function whiteIceBlueBloop() {
+  const sr = 0.96
+  const sg = 0.98
+  const sb = 1.0
+  const wr = 0.45
+  const wg = 0.72
+  const wb = 0.95
+  const low = [sr * 0.94 + 0.04, sg * 0.94 + 0.04, sb * 0.94 + 0.04]
+  const mid = [wr * 0.88, wg * 0.88, wb * 0.88]
+  const high = [
+    Math.min(wr * 1.15, 0.95),
+    Math.min(wg * 1.15, 0.95),
+    Math.min(wb * 1.15, 0.95),
+  ]
+  return { low, main: [sr, sg, sb], mid, high }
+}
+
 function hexToVec3(hex) {
   const h = hex.slice(1)
   return [parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255]
@@ -271,10 +289,12 @@ export function ArtSky({
   const canvasRef = useRef(null)
   const stateRef = useRef({})
 
-  const colors = useMemo(
-    () => paletteToBloop(ARTSKY_PALETTES[theme] || ARTSKY_PALETTES.cerulean),
-    [theme],
-  )
+  const colors = useMemo(() => {
+    if (theme === 'white-ice-blue') return whiteIceBlueBloop()
+    return paletteToBloop(ARTSKY_PALETTES[theme] || ARTSKY_PALETTES.cerulean)
+  }, [theme])
+
+  const canvasFallbackBg = theme === 'white-ice-blue' ? '#f2f6fc' : '#050a10'
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -422,7 +442,7 @@ export function ArtSky({
         inset: 0,
         overflow: 'hidden',
         pointerEvents: 'none',
-        background: '#050a10',
+        background: canvasFallbackBg,
       }}
     >
       <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />

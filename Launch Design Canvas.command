@@ -58,8 +58,8 @@ if [[ ! -d "$CANVAS_PKG/node_modules" ]]; then
   run_npm install --prefix "$CANVAS_PKG"
 fi
 
-echo "Starting Design Canvas (Vite)…"
-run_npm run dev --prefix "$CANVAS_PKG"
+echo "Starting Design Canvas (Vite, artboards + tweaks)…"
+run_npm run dev:design --prefix "$CANVAS_PKG"
 
 echo ""
 read -r -p "Press Enter to close this window…" _

@@ -1,16 +1,57 @@
-# React + Vite
+# CoilShield ICCP — mobile
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Production UI is a **full-screen React app** (login → Live / Trends / Settings). The **design canvas** (multi-artboard + tweaks) is still available for visual iteration.
 
-Currently, two official plugins are available:
+## Run in the browser (app shell)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+Open the URL Vite prints (e.g. `http://localhost:5173`). This is the same UI that ships inside the native wrapper.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### What works in the app shell
 
-## Expanding the ESLint configuration
+- **Sign in** — email + password validation, short “network” delay, session persisted (localStorage).
+- **Pair a controller** — host + port → `GET /api/meta` check → optional `GET /api/live`; then opens the main tabs. Stays on **simulator** if `/api/live` fails.
+- **Live** — ~1s **simulated telemetry** (or real HTTP poll when paired): drifting mA, totals, reference, rolling sparkline buffers; **↻ refresh**; **fault clear** on channels; **dismiss** health alerts; **tap a channel** for a bottom sheet with mini trend.
+- **Trends** — range / mA·Ω toggles, legend lines (toggle fixed), **export** buttons (JSON download + toast), **tap a session** to expand a detail line.
+- **Settings** — toggles (notifications / auto-clear / haptics) with toasts; **connection** line reflects pair URL or simulator; **Sign out**; **Documentation** opens a browser tab.
+- **Toasts** — top stack for exports, faults, pairing, etc.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Run the design canvas
+
+```bash
+npm run dev:design
+```
+
+## Build for iOS / Android (Capacitor)
+
+1. **One-time native projects** (after clone):
+
+   ```bash
+   npm install
+   npm run build
+   npx cap add ios
+   npx cap add android
+   ```
+
+2. **After web changes**:
+
+   ```bash
+   npm run build:mobile
+   ```
+
+3. **Open Xcode / Android Studio**:
+
+   ```bash
+   npm run cap:ios
+   npm run cap:android
+   ```
+
+`vite.config.js` uses `base: './'` so bundled assets load from the Capacitor WebView. `viewport-fit=cover` and safe-area env vars support edge-to-edge layouts on notched devices.
+
+## Auth & data
+
+Sign-in / “Pair a controller” currently advance to the main tabs as **stubs** — wire your ICCP session, SSH tunnel, or API client here next.

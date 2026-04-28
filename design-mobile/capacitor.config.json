@@ -1,0 +1,14 @@
+{
+  "appId": "com.coilshield.iccp",
+  "appName": "CoilShield ICCP",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#05070a"
+    }
+  }
+}

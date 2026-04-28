@@ -4,6 +4,8 @@ import type { SshConnectParams } from '../types'
 export class SSHManager {
   private client: Client | null = null
   private connected = false
+  /** Must stay attached for the Client lifetime — ssh2 emits `error` from the socket `data` path (e.g. channel open failure) and Node crashes if nothing listens. */
+  private logSshError: ((err: Error) => void) | null = null
 
   get isConnected() {
     return this.connected
@@ -15,31 +17,51 @@ export class SSHManager {
     const client = new Client()
     this.client = client
 
+    const logSshError = (err: Error) => {
+      console.error('[ssh2]', err.message)
+    }
+    this.logSshError = logSshError
+    client.on('error', logSshError)
+
     const port = params.port ?? 22
     const readyTimeout = params.readyTimeoutMs ?? 20_000
 
     await new Promise<void>((resolve, reject) => {
-      const onReady = () => {
-        this.connected = true
-        cleanup()
-        resolve()
+      let settled = false
+
+      const cleanupHandshake = () => {
+        client.removeListener('ready', onReady)
+        client.removeListener('error', onHandshakeError)
+        client.removeListener('close', onHandshakeClose)
       }
-      const onError = (err: Error) => {
-        cleanup()
+
+      const onHandshakeError = (err: Error) => {
+        if (settled) return
+        settled = true
+        this.connected = false
+        cleanupHandshake()
         reject(err)
       }
-      const onClose = () => {
+
+      const onHandshakeClose = () => {
         this.connected = false
+        if (settled) return
+        settled = true
+        cleanupHandshake()
+        reject(new Error('SSH connection closed before ready'))
       }
-      const cleanup = () => {
-        client.off('ready', onReady)
-        client.off('error', onError)
-        client.off('close', onClose)
+
+      const onReady = () => {
+        if (settled) return
+        settled = true
+        this.connected = true
+        cleanupHandshake()
+        resolve()
       }
 
       client.on('ready', onReady)
-      client.on('error', onError)
-      client.on('close', onClose)
+      client.on('error', onHandshakeError)
+      client.on('close', onHandshakeClose)
 
       const common = {
         host: params.host,
@@ -72,7 +94,10 @@ export class SSHManager {
     const client = this.client
     this.client = null
     this.connected = false
+    if (this.logSshError) {
+      client.removeListener('error', this.logSshError)
+      this.logSshError = null
+    }
     client.end()
   }
 }
-

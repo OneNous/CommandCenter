@@ -11,8 +11,13 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@shared-artsky": ["../design-mobile/src/lib/ArtSky.jsx"]
+    }
   },
-  "include": ["src", "electron", "electron.vite.config.ts", "vite.config.ts"]
+  "include": ["src", "electron", "vite.config.ts"],
+  "exclude": ["electron.vite.config.ts", "dist", "dist-electron", "node_modules"]
 }
 

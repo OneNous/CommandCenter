@@ -1,9 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { ExecChunk, ExecRequest, ExecResult, SshConnectParams, TunnelParams } from './types'
+import type {
+  ConnectionProfile,
+  ExecChunk,
+  ExecRequest,
+  ExecResult,
+  SshConnectParams,
+  TunnelParams,
+} from './types'
 
 type ExecChunkEvent = { requestId: string; chunk: ExecChunk }
-
-import type { ConnectionProfile } from './types'
 
 const api = {
   profilesGet: () =>

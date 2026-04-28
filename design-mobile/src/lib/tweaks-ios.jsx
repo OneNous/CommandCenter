@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from 'react'
+/* eslint-disable react-refresh/only-export-components -- useTweaks hook exported with UI */
+import { useCallback, useState } from 'react'
 
 export function useTweaks(defaults) {
   const [t, setT] = useState(defaults)

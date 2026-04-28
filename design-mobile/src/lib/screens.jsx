@@ -1,7 +1,11 @@
-import React, { useState } from 'react'
+/* eslint-disable react-refresh/only-export-components -- T, FIXTURE, and many leaf components */
+import { useState } from 'react'
 import { ArtSky } from './ArtSky.jsx'
 
-export const T = {
+const fontSans = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+const fontMono = 'ui-monospace, SFMono-Regular, Menlo, monospace'
+
+const T_DARK = {
   bg: '#05070a',
   surface: '#0b0f14',
   surfaceUp: '#121922',
@@ -23,10 +27,100 @@ export const T = {
   violet: '#a78bfa',
   violetBg: 'rgba(167,139,250,0.14)',
   ch: ['#7dd3fc', '#34d399', '#fb923c', '#fb7185', '#a78bfa'],
-  fontSans: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-  fontMono: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  fontSans,
+  fontMono,
   cardBg: 'rgba(12,18,24,0.65)',
   cardBgFault: 'rgba(60,12,24,0.65)',
+  eyebrow: 'rgba(125,211,252,0.75)',
+  scrim: 'rgba(0,0,0,0.55)',
+  fillTrack: 'rgba(255,255,255,0.06)',
+  fillPress: 'rgba(255,255,255,0.08)',
+  fillSubtle: 'rgba(255,255,255,0.06)',
+  fillRow: 'rgba(255,255,255,0.10)',
+  inputBg: 'rgba(255,255,255,0.04)',
+  segBg: 'rgba(255,255,255,0.04)',
+  segActive: 'rgba(255,255,255,0.10)',
+  segInShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+  toggleOff: 'rgba(255,255,255,0.10)',
+  chartGrid: 'rgba(255,255,255,0.06)',
+  sheetShadow: '0 -20px 60px rgba(0,0,0,0.5)',
+  loginFade: 'linear-gradient(180deg, rgba(5,7,10,0) 0%, rgba(5,7,10,0.55) 60%, rgba(5,7,10,0.85) 100%)',
+  tabBarFade: 'linear-gradient(180deg, rgba(5,7,10,0) 0%, rgba(5,7,10,0.95) 40%)',
+  tabBarWell: 'rgba(12,18,24,0.85)',
+  tabBarShadow: '0 12px 32px rgba(0,0,0,0.55)',
+  tabActiveBg: 'rgba(125,211,252,0.14)',
+  tabActiveBorder: 'rgba(125,211,252,0.35)',
+}
+
+const T_LIGHT = {
+  bg: '#eef4f9',
+  surface: 'rgba(255,255,255,0.55)',
+  surfaceUp: 'rgba(255,255,255,0.72)',
+  surfaceMax: 'rgba(255,255,255,0.94)',
+  border: 'rgba(15,23,42,0.10)',
+  borderS: 'rgba(15,23,42,0.16)',
+  text: '#0f172a',
+  muted: 'rgba(15,23,42,0.62)',
+  subtle: 'rgba(15,23,42,0.44)',
+  accent: '#0284c7',
+  accentS: '#0369a1',
+  accentSoft: 'rgba(14,165,233,0.14)',
+  green: '#059669',
+  greenBg: 'rgba(5,150,105,0.10)',
+  amber: '#d97706',
+  amberBg: 'rgba(217,119,6,0.12)',
+  red: '#e11d48',
+  redBg: 'rgba(225,29,72,0.10)',
+  violet: '#7c3aed',
+  violetBg: 'rgba(124,58,237,0.10)',
+  ch: ['#0284c7', '#059669', '#ea580c', '#e11d48', '#7c3aed'],
+  fontSans,
+  fontMono,
+  cardBg: 'rgba(255,255,255,0.58)',
+  cardBgFault: 'rgba(254,226,226,0.78)',
+  eyebrow: 'rgba(2,132,199,0.78)',
+  scrim: 'rgba(15,23,42,0.30)',
+  fillTrack: 'rgba(15,23,42,0.08)',
+  fillPress: 'rgba(15,23,42,0.10)',
+  fillSubtle: 'rgba(15,23,42,0.06)',
+  fillRow: 'rgba(15,23,42,0.12)',
+  inputBg: 'rgba(255,255,255,0.88)',
+  segBg: 'rgba(15,23,42,0.05)',
+  segActive: 'rgba(15,23,42,0.10)',
+  segInShadow: 'inset 0 1px 0 rgba(15,23,42,0.08)',
+  toggleOff: 'rgba(15,23,42,0.14)',
+  chartGrid: 'rgba(15,23,42,0.10)',
+  sheetShadow: '0 -20px 48px rgba(15,23,42,0.15)',
+  loginFade: 'linear-gradient(180deg, rgba(238,244,249,0) 0%, rgba(238,244,249,0.75) 55%, rgba(226,236,246,0.92) 100%)',
+  tabBarFade: 'linear-gradient(180deg, rgba(238,244,249,0) 0%, rgba(238,244,249,0.97) 38%)',
+  tabBarWell: 'rgba(255,255,255,0.82)',
+  tabBarShadow: '0 12px 32px rgba(15,23,42,0.12)',
+  tabActiveBg: 'rgba(14,165,233,0.16)',
+  tabActiveBorder: 'rgba(2,132,199,0.35)',
+}
+
+/** Mutable design tokens — use `applyDesignAppearance` so Pill/charts track light/dark. */
+export const T = { ...T_DARK }
+
+export function applyDesignAppearance(mode) {
+  const src = mode === 'light' ? T_LIGHT : T_DARK
+  Object.assign(T, src)
+}
+
+function pillStateStyle(state) {
+  const idle = { fg: T.muted, bg: T.fillSubtle }
+  const map = {
+    PROTECTING: { fg: T.green, bg: T.greenBg },
+    REGULATE: { fg: T.amber, bg: T.amberBg },
+    PROBING: { fg: T.amber, bg: T.amberBg },
+    FAULT: { fg: T.red, bg: T.redBg },
+    OPEN: idle,
+    OFF: idle,
+    DRY: idle,
+    DORMANT: idle,
+    UNKNOWN: idle,
+  }
+  return map[state] || map.UNKNOWN
 }
 
 export const FIXTURE = {
@@ -86,20 +180,8 @@ if (typeof window !== 'undefined') {
   window.FIXTURE = FIXTURE
 }
 
-const STATE_COLOR = {
-  PROTECTING: { fg: T.green, bg: T.greenBg },
-  REGULATE: { fg: T.amber, bg: T.amberBg },
-  PROBING: { fg: T.amber, bg: T.amberBg },
-  FAULT: { fg: T.red, bg: T.redBg },
-  OPEN: { fg: T.muted, bg: 'rgba(255,255,255,0.06)' },
-  OFF: { fg: T.muted, bg: 'rgba(255,255,255,0.06)' },
-  DRY: { fg: T.muted, bg: 'rgba(255,255,255,0.06)' },
-  DORMANT: { fg: T.muted, bg: 'rgba(255,255,255,0.06)' },
-  UNKNOWN: { fg: T.muted, bg: 'rgba(255,255,255,0.06)' },
-}
-
 export function Pill({ state, children, size = 'md' }) {
-  const s = STATE_COLOR[state] || STATE_COLOR.UNKNOWN
+  const s = pillStateStyle(state)
   return (
     <span
       style={{
@@ -132,7 +214,7 @@ export function Eyebrow({ children, style }) {
         fontWeight: 600,
         letterSpacing: '0.28em',
         textTransform: 'uppercase',
-        color: 'rgba(125,211,252,0.75)',
+        color: T.eyebrow,
         ...style,
       }}
     >
@@ -141,9 +223,22 @@ export function Eyebrow({ children, style }) {
   )
 }
 
-export function Card({ children, style, glow }) {
+export function Card({ children, style, glow, onClick }) {
   return (
     <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
       style={{
         position: 'relative',
         overflow: 'hidden',
@@ -261,11 +356,75 @@ export function ScreenHeader({ title, sub, right }) {
   )
 }
 
-export function DashboardScreen({ data = FIXTURE, onChannelTap, onClearFault }) {
+export function DashboardScreen({
+  data = FIXTURE,
+  title = 'System OK',
+  subtitle,
+  trustBanner,
+  onChannelTap,
+  onClearFault,
+  onRefresh,
+  refreshing,
+  onDismissAlert,
+}) {
   const protCount = data.channels.filter((c) => c.state === 'PROTECTING').length
+  const sub =
+    subtitle ??
+    `Live · feed ${typeof data.feedAge === 'number' ? data.feedAge.toFixed(2) : '?'}s · ${data.simMode ? 'SIM' : 'LIVE'}`
+  const fault = data.channels.some((c) => c.state === 'FAULT')
+  const dotColor = fault ? T.red : data.feedTrust === false ? T.amber : T.green
   return (
     <div style={{ padding: '8px 0 100px', color: T.text, fontFamily: T.fontSans }}>
-      <ScreenHeader title="System OK" sub="Live · feed 0.32s" right={<StatusDot color={T.green} />} />
+      <ScreenHeader
+        title={title}
+        sub={sub}
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {onRefresh && (
+              <button
+                type="button"
+                onClick={() => onRefresh()}
+                disabled={refreshing}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  border: `1px solid ${T.border}`,
+                  background: refreshing ? T.fillSubtle : T.fillPress,
+                  color: T.text,
+                  cursor: refreshing ? 'wait' : 'pointer',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: 16,
+                }}
+                aria-label="Refresh telemetry"
+              >
+                {refreshing ? '…' : '↻'}
+              </button>
+            )}
+            <StatusDot color={dotColor} />
+          </div>
+        }
+      />
+
+      {trustBanner && (
+        <div style={{ padding: '0 16px 12px' }}>
+          <div
+            style={{
+              padding: '12px 14px',
+              borderRadius: 14,
+              border: '1px solid rgba(251,191,36,0.35)',
+              background: T.amberBg,
+              color: T.amber,
+              fontSize: 12.5,
+              fontWeight: 500,
+              lineHeight: 1.45,
+            }}
+          >
+            {trustBanner}
+          </div>
+        </div>
+      )}
 
       <div style={{ padding: '8px 16px 14px' }}>
         <Card
@@ -340,7 +499,7 @@ export function DashboardScreen({ data = FIXTURE, onChannelTap, onClearFault }) 
       )}
       <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {data.alerts.map((a, i) => (
-          <AlertBar key={i} {...a} />
+          <AlertBar key={i} {...a} onDismiss={onDismissAlert ? () => onDismissAlert(i) : undefined} />
         ))}
       </div>
     </div>
@@ -450,7 +609,7 @@ function ChannelRow({ ch, onTap, onClearFault }) {
       </div>
 
       {!isFault && (
-        <div style={{ position: 'relative', height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'visible' }}>
+        <div style={{ position: 'relative', height: 4, borderRadius: 2, background: T.fillTrack, overflow: 'visible' }}>
           <div
             style={{
               position: 'absolute',
@@ -492,7 +651,7 @@ function ChannelRow({ ch, onTap, onClearFault }) {
             marginTop: 4,
             background: '#fff',
             color: '#000',
-            border: '1px solid rgba(255,255,255,0.14)',
+            border: `1px solid ${T.borderS}`,
             padding: '10px 14px',
             borderRadius: 8,
             fontSize: 13,
@@ -533,7 +692,7 @@ function Tiny({ label, value, unit }) {
   )
 }
 
-function AlertBar({ level, text }) {
+function AlertBar({ level, text, onDismiss }) {
   const styles = {
     fault: { bg: T.redBg, fg: T.red, bd: 'rgba(251,113,133,0.32)' },
     stale: { bg: T.amberBg, fg: T.amber, bd: 'rgba(251,191,36,0.32)' },
@@ -544,26 +703,174 @@ function AlertBar({ level, text }) {
   return (
     <div
       style={{
+        display: 'flex',
+        gap: 10,
+        alignItems: 'flex-start',
         background: s.bg,
         color: s.fg,
         border: `1px solid ${s.bd}`,
         borderRadius: 12,
-        padding: '10px 14px',
+        padding: '10px 12px 10px 14px',
         fontSize: 12.5,
         fontWeight: 500,
         lineHeight: 1.5,
         fontFamily: T.fontSans,
       }}
     >
-      {text}
+      <div style={{ flex: 1, minWidth: 0 }}>{text}</div>
+      {onDismiss && (
+        <button
+          type="button"
+          aria-label="Dismiss"
+          onClick={onDismiss}
+          style={{
+            flexShrink: 0,
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            border: `1px solid ${s.bd}`,
+            background: 'rgba(0,0,0,0.15)',
+            color: s.fg,
+            cursor: 'pointer',
+            fontSize: 16,
+            lineHeight: 1,
+            padding: 0,
+          }}
+        >
+          ×
+        </button>
+      )}
     </div>
   )
 }
 
-export function ReportsScreen({ data = FIXTURE }) {
+export function ChannelDetailSheet({ open, ch, series, onClose }) {
+  if (!open || !ch) return null
+  const key = `ch${ch.idx}`
+  const pts = (series && series[key]) || []
+  const W = 280
+  const H = 72
+  const pad = 4
+  const vals = pts.filter((v) => v != null)
+  const lo = vals.length ? Math.min(...vals) : 0
+  const hi = vals.length ? Math.max(...vals, 0.001) : 1
+  const sx = (i) => pad + (i / Math.max(pts.length - 1, 1)) * (W - pad * 2)
+  const sy = (v) => H - pad - ((v - lo) / (hi - lo)) * (H - pad * 2)
+  const line = pts
+    .map((v, i) => (v == null ? null : `${sx(i)},${sy(v)}`))
+    .filter(Boolean)
+    .join(' ')
+
+  return (
+    <div
+      role="dialog"
+      aria-modal
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 200,
+        background: T.scrim,
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        padding: '12px 12px calc(24px + env(safe-area-inset-bottom))',
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: 400,
+          borderRadius: 20,
+          border: `1px solid ${T.border}`,
+          background: T.surfaceMax,
+          padding: 18,
+          boxShadow: T.sheetShadow,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div>
+            <Eyebrow style={{ color: T.muted }}>Channel</Eyebrow>
+            <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>{ch.name}</div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              border: `1px solid ${T.border}`,
+              background: T.fillSubtle,
+              color: T.text,
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              cursor: 'pointer',
+              fontSize: 18,
+            }}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <Pill state={ch.state} />
+        <div style={{ display: 'flex', gap: 20, marginTop: 14 }}>
+          <div>
+            <Mono size={10} color={T.subtle}>
+              mA
+            </Mono>
+            <div style={{ marginTop: 2 }}>
+              <Mono size={22} weight={600}>
+                {ch.ma == null ? '—' : ch.ma.toFixed(3)}
+              </Mono>
+            </div>
+          </div>
+          <div>
+            <Mono size={10} color={T.subtle}>
+              Target
+            </Mono>
+            <div style={{ marginTop: 2 }}>
+              <Mono size={22} weight={600}>
+                {ch.target?.toFixed?.(2) ?? '—'}
+              </Mono>
+            </div>
+          </div>
+        </div>
+        <div style={{ marginTop: 14 }}>
+          <Mono size={10} color={T.subtle}>
+            Last {pts.length} samples
+          </Mono>
+          <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', marginTop: 6 }}>
+            <polyline fill="none" stroke={T.ch[ch.idx % T.ch.length]} strokeWidth="2" points={line} strokeLinejoin="round" />
+          </svg>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            width: '100%',
+            marginTop: 16,
+            padding: '12px',
+            borderRadius: 12,
+            border: `1px solid ${T.border}`,
+            background: T.fillPress,
+            color: T.text,
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: T.fontSans,
+          }}
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export function ReportsScreen({ data = FIXTURE, onExport }) {
   const [range, setRange] = useState('1h')
   const [mode, setMode] = useState('mA')
   const [visible, setVisible] = useState({})
+  const [sessionOpen, setSessionOpen] = useState(/** @type {number | null} */ (null))
   const ranges = ['15m', '1h', '6h', '24h']
   const modes = ['mA', 'Ω']
 
@@ -578,7 +885,7 @@ export function ReportsScreen({ data = FIXTURE }) {
             <Seg items={modes} value={mode} onChange={setMode} />
           </div>
 
-          <ChartSVG series={data.series} mode={mode} visible={visible} />
+          <ChartSVG series={data.series} mode={mode} visible={visible} channelCount={data.channels.length} />
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 12 }}>
             <LegendDot
@@ -586,31 +893,31 @@ export function ReportsScreen({ data = FIXTURE }) {
               dashed
               label="Target"
               on={visible.target !== false}
-              onClick={() => setVisible({ ...visible, target: visible.target === false })}
+              onClick={() => setVisible((v) => ({ ...v, target: v.target === false ? true : false }))}
             />
             {data.channels.map((ch) => (
               <LegendDot
                 key={ch.idx}
-                color={T.ch[ch.idx]}
+                color={T.ch[ch.idx % T.ch.length]}
                 label={ch.name}
                 on={visible['ch' + ch.idx] !== false}
-                onClick={() => setVisible({ ...visible, ['ch' + ch.idx]: visible['ch' + ch.idx] === false })}
+                onClick={() => setVisible((v) => ({ ...v, ['ch' + ch.idx]: v['ch' + ch.idx] === false ? true : false }))}
               />
             ))}
             <LegendDot
               color={T.text}
               label="Total"
               on={visible.total !== false}
-              onClick={() => setVisible({ ...visible, total: visible.total === false })}
+              onClick={() => setVisible((v) => ({ ...v, total: v.total === false ? true : false }))}
             />
           </div>
         </Card>
       </div>
 
-      <div style={{ padding: '0 16px 14px', display: 'flex', gap: 8 }}>
-        <ExportBtn>↓ CSV</ExportBtn>
-        <ExportBtn>↓ SQLite</ExportBtn>
-        <ExportBtn>↓ JSON</ExportBtn>
+      <div style={{ padding: '0 16px 14px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <ExportBtn onClick={() => onExport?.('csv')}>↓ CSV</ExportBtn>
+        <ExportBtn onClick={() => onExport?.('sqlite')}>↓ SQLite</ExportBtn>
+        <ExportBtn onClick={() => onExport?.('json')}>↓ JSON</ExportBtn>
       </div>
 
       <div style={{ padding: '4px 20px 8px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
@@ -621,7 +928,11 @@ export function ReportsScreen({ data = FIXTURE }) {
       </div>
       <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {data.sessions.map((s) => (
-          <Card key={s.id} style={{ padding: 12 }}>
+          <Card
+            key={s.id}
+            style={{ padding: 12, cursor: onExport ? 'pointer' : 'default' }}
+            onClick={onExport ? () => setSessionOpen((prev) => (prev === s.id ? null : s.id)) : undefined}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <Mono size={12} weight={600}>
                 #{s.id}
@@ -672,6 +983,12 @@ export function ReportsScreen({ data = FIXTURE }) {
                 {s.end}
               </span>
             </div>
+            {onExport && sessionOpen === s.id && (
+              <Mono size={10} color={T.subtle} style={{ marginTop: 8, lineHeight: 1.45, display: 'block' }}>
+                Session artifact: wet_minutes={JSON.stringify(s.dur)}, channels={JSON.stringify(s.chs)}, avg_mA=
+                {s.avgMa.toFixed(3)}. Tap export above for full bundle.
+              </Mono>
+            )}
           </Card>
         ))}
       </div>
@@ -684,7 +1001,7 @@ function Seg({ items, value, onChange }) {
     <div
       style={{
         display: 'inline-flex',
-        background: 'rgba(255,255,255,0.04)',
+        background: T.segBg,
         border: `1px solid ${T.border}`,
         borderRadius: 8,
         padding: 2,
@@ -698,7 +1015,7 @@ function Seg({ items, value, onChange }) {
             key={it}
             onClick={() => onChange(it)}
             style={{
-              background: active ? 'rgba(255,255,255,0.10)' : 'transparent',
+              background: active ? T.segActive : 'transparent',
               color: active ? T.text : T.muted,
               border: 'none',
               padding: '5px 12px',
@@ -708,7 +1025,7 @@ function Seg({ items, value, onChange }) {
               cursor: 'pointer',
               fontFamily: T.fontSans,
               fontVariantNumeric: 'tabular-nums',
-              boxShadow: active ? 'inset 0 1px 0 rgba(255,255,255,0.1)' : 'none',
+              boxShadow: active ? T.segInShadow : 'none',
             }}
           >
             {it}
@@ -719,10 +1036,11 @@ function Seg({ items, value, onChange }) {
   )
 }
 
-function ExportBtn({ children }) {
+function ExportBtn({ children, onClick }) {
   return (
     <button
       type="button"
+      onClick={onClick}
       style={{
         background: 'transparent',
         color: T.text,
@@ -769,7 +1087,7 @@ function LegendDot({ color, label, on, dashed, onClick }) {
   )
 }
 
-function ChartSVG({ series, mode, visible }) {
+function ChartSVG({ series, mode, visible, channelCount = 4 }) {
   const W = 320
   const H = 160
   const pad = { t: 8, r: 6, b: 18, l: 28 }
@@ -824,7 +1142,7 @@ function ChartSVG({ series, mode, visible }) {
         const t = (yMax * i) / ticks
         return (
           <g key={i}>
-            <line x1={pad.l} x2={W - pad.r} y1={sy(t)} y2={sy(t)} stroke="rgba(255,255,255,0.06)" />
+            <line x1={pad.l} x2={W - pad.r} y1={sy(t)} y2={sy(t)} stroke={T.chartGrid} />
             <text x={pad.l - 4} y={sy(t) + 3} textAnchor="end" fontSize="8.5" fontFamily={T.fontMono} fill={T.subtle}>
               {t.toFixed(1)}
             </text>
@@ -847,16 +1165,26 @@ function ChartSVG({ series, mode, visible }) {
         })()}
 
       {visible.target !== false && poly(series.target, T.violet, '5 3', 1.4, 'tg')}
-      {[0, 1, 2, 3].map((i) => visible['ch' + i] !== false && poly(series['ch' + i], T.ch[i], null, 1.6, 'ch' + i))}
+      {Array.from({ length: channelCount }, (_, i) =>
+        visible['ch' + i] !== false && poly(series['ch' + i], T.ch[i % T.ch.length], null, 1.6, 'ch' + i),
+      )}
       {visible.total !== false && poly(series.total, T.text, null, 2, 'tot')}
     </svg>
   )
 }
 
-export function SettingsScreen() {
-  const [notif, setNotif] = useState(true)
-  const [auto, setAuto] = useState(true)
-  const [haptic, setHaptic] = useState(true)
+export function SettingsScreen({
+  displayName = 'Jordan Kim',
+  email = 'jordan@onenous.io',
+  initials = 'JK',
+  prefs = { notif: true, autoClear: true, haptic: true, appearance: 'dark' },
+  onPrefsChange,
+  connectionDetail = '10.0.4.18 · LAN',
+  logDirDetail = '/var/lib/coilshield/logs',
+  firmwareDetail = '2.1.4',
+  onSignOut,
+  onOpenDocs,
+}) {
   return (
     <div style={{ padding: '8px 0 100px', color: T.text, fontFamily: T.fontSans }}>
       <ScreenHeader title="Settings" sub="Account · device" />
@@ -873,38 +1201,53 @@ export function SettingsScreen() {
               placeItems: 'center',
               color: '#000',
               fontWeight: 700,
-              fontSize: 20,
+              fontSize: initials.length > 2 ? 14 : 20,
             }}
           >
-            JK
+            {initials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>Jordan Kim</div>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>{displayName || 'Operator'}</div>
             <Mono size={11} color={T.subtle}>
-              field-ops · org/onenous
+              {email || '—'}
             </Mono>
           </div>
-          <span style={{ color: T.muted, fontSize: 18 }}>›</span>
         </Card>
       </div>
 
       <Group label="Device">
-        <Toggle label="System notifications" on={notif} onChange={setNotif} sub="Faults, stale-feed, overcurrent" />
-        <Toggle label="Auto-clear non-latched" on={auto} onChange={setAuto} sub="Resume PROTECTING when telemetry recovers" />
-        <Toggle label="Haptics" on={haptic} onChange={setHaptic} />
+        <Toggle
+          label="System notifications"
+          on={prefs.notif}
+          onChange={(v) => onPrefsChange?.('notif', v)}
+          sub="Faults, stale-feed, overcurrent"
+        />
+        <Toggle
+          label="Auto-clear non-latched"
+          on={prefs.autoClear}
+          onChange={(v) => onPrefsChange?.('autoClear', v)}
+          sub="Resume PROTECTING when telemetry recovers"
+        />
+        <Toggle label="Haptics" on={prefs.haptic} onChange={(v) => onPrefsChange?.('haptic', v)} />
+        <Toggle
+          label="Light appearance"
+          on={prefs.appearance === 'light'}
+          onChange={(v) => onPrefsChange?.('appearance', v ? 'light' : 'dark')}
+          sub="Ice-white fluid sky — same ArtSky preset as the v77 shop (white-ice-blue)"
+        />
       </Group>
 
       <Group label="Connection">
-        <Link label="Pi controller" detail="10.0.4.18 · LAN" />
-        <Link label="Log directory" detail="/var/lib/coilshield/logs" />
+        <Link label="Controller endpoint" detail={connectionDetail} />
+        <Link label="Log directory" detail={logDirDetail} />
         <Link label="Webhook" detail="not configured" />
       </Group>
 
       <Group label="About">
-        <Link label="Firmware" detail="2.1.4" />
+        <Link label="Firmware" detail={firmwareDetail} />
         <Link label="App version" detail="1.0.0 (build 142)" />
-        <Link label="Documentation" />
-        <Link label="Sign out" danger />
+        <Link label="Documentation" onClick={onOpenDocs} />
+        <Link label="Sign out" danger onClick={onSignOut} />
       </Group>
     </div>
   )
@@ -941,7 +1284,7 @@ function Toggle({ label, sub, on, onChange }) {
           width: 42,
           height: 24,
           borderRadius: 999,
-          background: on ? T.accentS : 'rgba(255,255,255,0.10)',
+          background: on ? T.accentS : T.toggleOff,
           border: 'none',
           padding: 2,
           cursor: 'pointer',
@@ -965,16 +1308,29 @@ function Toggle({ label, sub, on, onChange }) {
   )
 }
 
-function Link({ label, detail, danger }) {
+function Link({ label, detail, danger, onClick }) {
   return (
     <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
+      onClick={onClick}
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 12,
         padding: '13px 12px',
         borderBottom: `1px solid ${T.border}`,
-        cursor: 'pointer',
+        cursor: onClick ? 'pointer' : 'default',
       }}
     >
       <div style={{ flex: 1, fontSize: 14, color: danger ? T.red : T.text }}>{label}</div>
@@ -983,12 +1339,33 @@ function Link({ label, detail, danger }) {
           {detail}
         </Mono>
       )}
-      <span style={{ color: T.subtle, fontSize: 14 }}>›</span>
+      <span style={{ color: T.subtle, fontSize: 14 }}>{onClick ? '›' : ''}</span>
     </div>
   )
 }
 
-export function LoginScreen({ sky }) {
+export function LoginScreen({
+  sky,
+  mode = 'signIn',
+  onBackFromPair,
+  email = 'jordan@onenous.io',
+  password = '',
+  onEmailChange,
+  onPasswordChange,
+  loginError,
+  pairError,
+  loginLoading,
+  pairTesting,
+  onSignIn,
+  onOpenPair,
+  onTestPair,
+  onSavePair,
+  pairHost = '127.0.0.1',
+  pairPort = '9080',
+  onPairHostChange,
+  onPairPortChange,
+}) {
+  const pair = mode === 'pair'
   return (
     <div
       style={{
@@ -1000,7 +1377,7 @@ export function LoginScreen({ sky }) {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        background: '#05070a',
+        background: T.bg,
       }}
     >
       <ArtSky {...(sky || {})} />
@@ -1009,12 +1386,41 @@ export function LoginScreen({ sky }) {
           position: 'absolute',
           inset: 0,
           zIndex: 4,
-          background: 'linear-gradient(180deg, rgba(5,7,10,0) 0%, rgba(5,7,10,0.55) 60%, rgba(5,7,10,0.85) 100%)',
+          background: T.loginFade,
         }}
       />
 
-      <div style={{ position: 'relative', zIndex: 1, flex: 1, padding: '80px 28px 28px', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 56 }}>
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          flex: 1,
+          padding: 'max(52px, env(safe-area-inset-top)) 28px 28px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
+          {pair && (
+            <button
+              type="button"
+              onClick={() => onBackFromPair?.()}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                border: `1px solid ${T.border}`,
+                background: T.fillSubtle,
+                color: T.text,
+                cursor: 'pointer',
+                fontSize: 18,
+              }}
+              aria-label="Back"
+            >
+              ←
+            </button>
+          )}
           <div
             style={{
               width: 28,
@@ -1036,64 +1442,148 @@ export function LoginScreen({ sky }) {
         </div>
 
         <div style={{ marginTop: 'auto' }}>
-          <Eyebrow>ICCP control</Eyebrow>
+          <Eyebrow>{pair ? 'On-device pairing' : 'ICCP control'}</Eyebrow>
           <h1
             style={{
               margin: '10px 0 8px',
-              fontSize: 40,
+              fontSize: 34,
               fontWeight: 600,
               letterSpacing: '-0.05em',
-              lineHeight: 1.0,
+              lineHeight: 1.05,
             }}
           >
-            Cathodic protection in your pocket.
+            {pair ? 'Point the app at your Pi dashboard.' : 'Cathodic protection in your pocket.'}
           </h1>
-          <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.6, margin: '0 0 28px', maxWidth: 320 }}>
-            Live telemetry, fault clearing, and trend export from any anode channel — over LAN or remote.
+          <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.6, margin: '0 0 22px', maxWidth: 340 }}>
+            {pair
+              ? 'After SSH port-forward (e.g. local 9080 → Pi 8080), enter host and port. We hit /api/meta to verify, then stream /api/live.'
+              : 'Live telemetry, fault clearing, and trend export from any anode channel — over LAN or remote.'}
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Field label="Email" value="jordan@onenous.io" />
-            <Field label="Password" value="••••••••••" />
-          </div>
-
-          <button
-            type="button"
-            style={{
-              width: '100%',
-              marginTop: 18,
-              background: '#fff',
-              color: '#000',
-              border: '1px solid rgba(255,255,255,0.14)',
-              padding: '14px 16px',
-              borderRadius: 10,
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: T.fontSans,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.24)',
-            }}
-          >
-            Sign in
-          </button>
-          <button
-            type="button"
-            style={{
-              width: '100%',
-              marginTop: 8,
-              background: 'transparent',
-              color: T.text,
-              border: `1px solid ${T.border}`,
-              padding: '14px 16px',
-              borderRadius: 10,
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: T.fontSans,
-            }}
-          >
-            Pair a controller
-          </button>
+          {pair ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <Field label="Host" value={pairHost} onChange={onPairHostChange} placeholder="127.0.0.1" autoComplete="off" />
+              <Field
+                label="Port"
+                value={pairPort}
+                onChange={onPairPortChange}
+                placeholder="9080"
+                autoComplete="off"
+                inputMode="numeric"
+              />
+              {pairError && (
+                <Mono size={12} color={T.red} weight={500}>
+                  {pairError}
+                </Mono>
+              )}
+              <button
+                type="button"
+                disabled={pairTesting}
+                onClick={() => (onTestPair ? onTestPair() : undefined)}
+                style={{
+                  width: '100%',
+                  marginTop: 6,
+                  background: T.fillRow,
+                  color: T.text,
+                  border: `1px solid ${T.border}`,
+                  padding: '14px 16px',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: pairTesting ? 'wait' : 'pointer',
+                  fontFamily: T.fontSans,
+                }}
+              >
+                {pairTesting ? 'Testing…' : 'Test connection (/api/meta)'}
+              </button>
+              <button
+                type="button"
+                disabled={pairTesting}
+                onClick={() => (onSavePair ? onSavePair() : undefined)}
+                style={{
+                  width: '100%',
+                  marginTop: 4,
+                  background: '#fff',
+                  color: '#000',
+                  border: `1px solid ${T.borderS}`,
+                  padding: '14px 16px',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: pairTesting ? 'wait' : 'pointer',
+                  fontFamily: T.fontSans,
+                }}
+              >
+                Save & open dashboard
+              </button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <Field
+                  label="Email"
+                  value={email}
+                  onChange={onEmailChange}
+                  placeholder="you@organization.com"
+                  autoComplete="username"
+                />
+                <Field
+                  label="Password"
+                  value={password}
+                  onChange={onPasswordChange}
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+              </div>
+              {loginError && (
+                <Mono size={12} color={T.red} weight={500} style={{ marginTop: 10, display: 'block' }}>
+                  {loginError}
+                </Mono>
+              )}
+              <button
+                type="button"
+                disabled={loginLoading}
+                onClick={() => void onSignIn?.()}
+                style={{
+                  width: '100%',
+                  marginTop: 18,
+                  background: '#fff',
+                  color: '#000',
+                  border: `1px solid ${T.borderS}`,
+                  padding: '14px 16px',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: loginLoading ? 'wait' : 'pointer',
+                  fontFamily: T.fontSans,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.24)',
+                  opacity: loginLoading ? 0.75 : 1,
+                }}
+              >
+                {loginLoading ? 'Signing in…' : 'Sign in'}
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenPair?.()}
+                style={{
+                  width: '100%',
+                  marginTop: 8,
+                  background: 'transparent',
+                  color: T.text,
+                  border: `1px solid ${T.border}`,
+                  padding: '14px 16px',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  fontFamily: T.fontSans,
+                }}
+              >
+                Pair a controller
+              </button>
+            </>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
             <Mono size={11} color={T.subtle}>
@@ -1106,14 +1596,23 @@ export function LoginScreen({ sky }) {
   )
 }
 
-function Field({ label, value }) {
+function Field({ label, value, onChange, type = 'text', placeholder, autoComplete, inputMode }) {
+  const controlled = typeof onChange === 'function'
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span style={{ fontSize: 11, color: T.muted, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ fontSize: 11, color: T.muted, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+        {label}
+      </span>
       <input
-        defaultValue={value}
+        value={controlled ? value ?? '' : undefined}
+        defaultValue={!controlled ? value : undefined}
+        onChange={controlled ? (e) => onChange(e.target.value) : undefined}
+        type={type}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
         style={{
-          background: 'rgba(255,255,255,0.04)',
+          background: T.inputBg,
           border: `1px solid ${T.border}`,
           borderRadius: 10,
           padding: '12px 14px',
@@ -1127,13 +1626,16 @@ function Field({ label, value }) {
   )
 }
 
-export function BottomTabs({ tab, setTab, platform = 'ios' }) {
-  const tabs = [
-    { id: 'dash', label: 'Live' },
-    { id: 'trends', label: 'Trends' },
-    { id: 'settings', label: 'Settings' },
-  ]
-  const bottomPad = platform === 'ios' ? 34 : 24
+const DEFAULT_TAB_ITEMS = [
+  { id: 'dash', label: 'Live' },
+  { id: 'trends', label: 'Trends' },
+  { id: 'settings', label: 'Settings' },
+]
+
+/** @param {{ tab: string; setTab: (t: string) => void; platform?: string; items?: { id: string; label: string; disabled?: boolean }[] }} props */
+export function BottomTabs({ tab, setTab, platform = 'ios', items }) {
+  const tabs = items ?? DEFAULT_TAB_ITEMS
+  const bottomPad = platform === 'ios' ? 20 : 16
   return (
     <div
       style={{
@@ -1141,8 +1643,8 @@ export function BottomTabs({ tab, setTab, platform = 'ios' }) {
         left: 0,
         right: 0,
         bottom: 0,
-        paddingBottom: bottomPad,
-        background: 'linear-gradient(180deg, rgba(5,7,10,0) 0%, rgba(5,7,10,0.95) 40%)',
+        paddingBottom: `calc(${bottomPad}px + env(safe-area-inset-bottom, 0px))`,
+        background: T.tabBarFade,
         pointerEvents: 'none',
         zIndex: 30,
       }}
@@ -1150,7 +1652,7 @@ export function BottomTabs({ tab, setTab, platform = 'ios' }) {
       <div
         style={{
           margin: '0 16px',
-          background: 'rgba(12,18,24,0.85)',
+          background: T.tabBarWell,
           border: `1px solid ${T.border}`,
           borderRadius: 18,
           padding: 6,
@@ -1159,28 +1661,31 @@ export function BottomTabs({ tab, setTab, platform = 'ios' }) {
           backdropFilter: 'blur(18px) saturate(140%)',
           WebkitBackdropFilter: 'blur(18px) saturate(140%)',
           pointerEvents: 'auto',
-          boxShadow: '0 12px 32px rgba(0,0,0,0.55)',
+          boxShadow: T.tabBarShadow,
         }}
       >
         {tabs.map((t) => {
           const active = tab === t.id
+          const dis = !!t.disabled
           return (
             <button
               type="button"
               key={t.id}
-              onClick={() => setTab(t.id)}
+              disabled={dis}
+              onClick={() => !dis && setTab(t.id)}
               style={{
                 flex: 1,
-                padding: '10px 8px',
-                background: active ? 'rgba(125,211,252,0.14)' : 'transparent',
-                color: active ? T.accent : T.muted,
-                border: active ? `1px solid rgba(125,211,252,0.35)` : '1px solid transparent',
+                padding: '10px 6px',
+                background: active ? T.tabActiveBg : 'transparent',
+                color: dis ? T.subtle : active ? T.accent : T.muted,
+                border: active ? `1px solid ${T.tabActiveBorder}` : '1px solid transparent',
                 borderRadius: 14,
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: 600,
-                cursor: 'pointer',
+                cursor: dis ? 'not-allowed' : 'pointer',
                 fontFamily: T.fontSans,
                 letterSpacing: '-0.01em',
+                opacity: dis ? 0.45 : 1,
               }}
             >
               {t.label}
