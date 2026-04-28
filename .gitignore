@@ -20,6 +20,9 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
+# macOS app bundles (built artifacts)
+*.app/
+
 # Vite / caches
 .vite/
 *.tsbuildinfo

@@ -38,7 +38,7 @@ const TWEAK_DEFAULTS = {
 function IOSPhone({ tab = 'dash', sky, shellBg, deviceDark }) {
   return (
     <IOSDevice width={390} height={844} dark={deviceDark}>
-      <PhoneShell key={tab} platform="ios" initialTab={tab} sky={sky} shellBg={shellBg} />
+      <PhoneShell key={tab} platform="ios" initialTab={tab} sky={sky} contentBg={shellBg} />
     </IOSDevice>
   )
 }
@@ -104,7 +104,7 @@ function AndroidShell({ children, chromeBg = '#05070a' }) {
 function AndroidPhone({ tab = 'dash', sky, shellBg, chromeBg }) {
   return (
     <AndroidShell chromeBg={chromeBg}>
-      <PhoneShell key={tab} platform="android" initialTab={tab} sky={sky} shellBg={shellBg} />
+      <PhoneShell key={tab} platform="android" initialTab={tab} sky={sky} contentBg={shellBg} />
     </AndroidShell>
   )
 }

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Double-click this file in Finder to start the Electron desktop app.
+# Double-click in Finder to start the Electron desktop app (terminal stays open).
 set -e
 
 THIS="${BASH_SOURCE[0]:-$0}"
@@ -41,13 +41,13 @@ resolve_npm_bin() {
 
 NPM_BIN="$(resolve_npm_bin)"
 if [[ -z "$NPM_BIN" || ! -x "$NPM_BIN" ]]; then
-  osascript -e 'display alert "Command Center" message "Could not find a real npm binary (nvm/Homebrew PATH issue). Open Terminal, run: nvm use default  then try again." as critical'
+  osascript -e 'display alert "ICCP Command Center" message "Could not find a real npm binary (nvm/Homebrew PATH issue). Open Terminal, run: nvm use default  then try again." as critical'
   exit 1
 fi
 
 DESKTOP_PKG="$ROOT/desktop"
 if [[ ! -d "$DESKTOP_PKG" ]]; then
-  osascript -e "display alert \"Command Center\" message \"Missing folder: $DESKTOP_PKG\" as critical"
+  osascript -e "display alert \"ICCP Command Center\" message \"Missing folder: $DESKTOP_PKG\" as critical"
   exit 1
 fi
 
@@ -60,7 +60,7 @@ if [[ ! -d "$DESKTOP_PKG/node_modules" ]]; then
   run_npm install --legacy-peer-deps --prefix "$DESKTOP_PKG"
 fi
 
-echo "Starting Command Center (Electron)…"
+echo "Starting ICCP Command Center (Electron)…"
 run_npm run dev --prefix "$DESKTOP_PKG"
 
 echo ""

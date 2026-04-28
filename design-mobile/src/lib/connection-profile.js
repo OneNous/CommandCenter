@@ -15,10 +15,19 @@
  * @property {string} [httpApiBase]
  */
 
+function newProfileId() {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  } catch {
+    /* non-secure contexts / older WebViews */
+  }
+  return `p-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 /** Same starter profile as desktop `App.tsx` defaultProfile() (typical Pi / LAN setup). */
 export function createDefaultProfile() {
   return {
-    id: crypto.randomUUID(),
+    id: newProfileId(),
     name: 'Pi @ 192.168.1.137',
     host: '192.168.1.137',
     port: 22,
@@ -57,7 +66,7 @@ export function normalizeProfile(p) {
         : 8080
 
   return {
-    id: String(o.id ?? crypto.randomUUID()),
+    id: String(o.id ?? newProfileId()),
     name: String(o.name ?? 'Profile'),
     host: String(o.host ?? ''),
     port: typeof o.port === 'number' ? o.port : 22,
@@ -85,7 +94,7 @@ export function buildSshTunnelCommand(profile, localForwardPort = 9080) {
 
 /**
  * @param {import('./connection-profile').ConnectionProfile} profile
- * @param {string} command e.g. `iccp live`
+ * @param {string} command e.g. `uptime` (any shell command; ICCP CLI name varies by install)
  */
 export function buildRemoteExecShell(profile, command) {
   const lines = (profile.remoteEnvLines ?? []).map((l) => l.trim()).filter(Boolean)

@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeImage } from 'electron'
 import type { ClientChannel } from 'ssh2'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { SSHManager } from './ssh/SSHManager'
 import { PortForward } from './ssh/PortForward'
@@ -11,11 +12,25 @@ const tunnel = new PortForward()
 /** Last successful SSH connect — used to prepend `remoteEnvLines` to exec requests from the renderer. */
 let activeProfile: ConnectionProfile | null = null
 
+const APP_DISPLAY_NAME = 'ICCP Command Center'
+
+/** Repo `desktop/resources/app-icon.png` — resolved from `out/main` after build. */
+function resolveAppIconPath(): string | undefined {
+  const png = join(__dirname, '../../resources/app-icon.png')
+  if (existsSync(png)) return png
+  return undefined
+}
+
 function createWindow() {
+  const iconPath = resolveAppIconPath()
+  const icon = iconPath ? nativeImage.createFromPath(iconPath) : undefined
+
   const win = new BrowserWindow({
     width: 1240,
     height: 800,
+    title: APP_DISPLAY_NAME,
     backgroundColor: '#05070a',
+    ...(icon && !icon.isEmpty() ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/preload.mjs'),
       contextIsolation: true,
@@ -33,7 +48,17 @@ function createWindow() {
   return win
 }
 
+app.setName(APP_DISPLAY_NAME)
+
 app.whenReady().then(() => {
+  if (process.platform === 'darwin' && app.dock) {
+    const iconPath = resolveAppIconPath()
+    if (iconPath) {
+      const img = nativeImage.createFromPath(iconPath)
+      if (!img.isEmpty()) app.dock.setIcon(img)
+    }
+  }
+
   createWindow()
 
   app.on('activate', () => {
@@ -105,11 +130,14 @@ ipcMain.handle('tunnel:stop', async () => {
   return { ok: true }
 })
 
+/**
+ * Run on the Pi as `bash -lc …` so non-interactive SSH `exec` still sees the same PATH as a login shell
+ * (`iccp` is often only on PATH after `.profile` / `.bashrc`). Optional profile `remoteEnvLines` are prepended as exports.
+ */
 function wrapRemoteCommand(command: string, profile: ConnectionProfile | null): string {
   const lines = profile?.remoteEnvLines?.map((l) => l.trim()).filter(Boolean) ?? []
-  if (!lines.length) return command
   const exports = lines.map((l) => (l.startsWith('export ') ? l : `export ${l}`))
-  const inner = [...exports, command].join(' && ')
+  const inner = exports.length > 0 ? [...exports, command].join(' && ') : command
   return `bash -lc ${JSON.stringify(inner)}`
 }
 

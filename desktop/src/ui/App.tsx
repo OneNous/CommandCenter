@@ -9,8 +9,14 @@ import {
   type ApiLive,
   type ApiMeta,
 } from './api'
+import { LiveDashboard } from './LiveDashboard'
+import { MetaSummary } from './MetaSummary'
+import { PiConsole } from './PiConsole'
+import { buildDefaultDashboardStartCommand } from './dashboardStart'
+import { V77SiteHeader } from './V77SiteHeader'
+import type { AppTabId } from './tabIds'
 
-type TabId = 'connect' | 'live' | 'meta'
+type TabId = AppTabId
 
 const APPEARANCE_LS = 'iccp-desktop-appearance'
 
@@ -33,6 +39,7 @@ function defaultProfile(): ConnectionProfile {
     auth: { type: 'password', password: '' },
     remoteDashboardHost: '127.0.0.1',
     remoteDashboardPort: 8080,
+    autoStartDashboard: true,
     remoteEnvLines: [],
   }
 }
@@ -57,7 +64,6 @@ export function App() {
   /** Editable copy of the selected profile; persisted only via Save profile or SSH + tunnel. */
   const [draft, setDraft] = useState<ConnectionProfile | null>(null)
   const [profileDirty, setProfileDirty] = useState(false)
-  const [status, setStatus] = useState<string>('Disconnected')
   const [error, setError] = useState<string | null>(null)
   const [localPort, setLocalPort] = useState<number | null>(null)
   const [meta, setMeta] = useState<ApiMeta | null>(null)
@@ -135,9 +141,10 @@ export function App() {
     setLiveError(null)
   }, [])
 
+  /** Poll /api/live whenever the dashboard tunnel is up — not only on the Live tab — so other tabs are not “frozen”. */
   useEffect(() => {
     stopPolling()
-    if (!apiBase || tab !== 'live') return
+    if (!apiBase) return
 
     let cancelled = false
     const tick = async () => {
@@ -154,7 +161,7 @@ export function App() {
       cancelled = true
       stopPolling()
     }
-  }, [apiBase, tab, meta, fetchLiveOnce, stopPolling])
+  }, [apiBase, meta, fetchLiveOnce, stopPolling])
 
   useEffect(() => {
     if (!apiBase || tab !== 'meta') return
@@ -211,24 +218,46 @@ export function App() {
     }
     const toUse: ConnectionProfile = { ...draft, host }
     try {
-      setStatus('Connecting…')
       const next = profiles.map((p) => (p.id === toUse.id ? toUse : p))
       await persistProfiles(next, activeProfileId)
       setDraft({ ...toUse })
       setProfileDirty(false)
       await window.iccp.sessionSetProfile(toUse)
       await window.iccp.sshConnect(profileToConnectParams(toUse))
-      const { localPort: port } = await window.iccp.tunnelStart({
+
+      if (toUse.autoStartDashboard !== false) {
+        const custom = toUse.dashboardStartCommand?.trim()
+        const cmd = custom ? custom : buildDefaultDashboardStartCommand(toUse)
+        await window.iccp.sshExec({ command: cmd, wrapEnv: true })
+      }
+
+      const tunnelParams = {
         remoteHost: toUse.remoteDashboardHost,
         remotePort: toUse.remoteDashboardPort,
-      })
+      }
+      const maxAttempts = toUse.autoStartDashboard !== false ? 16 : 4
+      let port: number | undefined
+      let lastErr: unknown
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          ;({ localPort: port } = await window.iccp.tunnelStart(tunnelParams))
+          break
+        } catch (e) {
+          lastErr = e
+          if (attempt < maxAttempts - 1) {
+            await new Promise((r) => setTimeout(r, 450))
+          }
+        }
+      }
+      if (port == null) {
+        throw lastErr instanceof Error ? lastErr : new Error(String(lastErr))
+      }
+
       setLocalPort(port)
       const base = makeApiBase(port)
       await fetchMeta(base)
-      setStatus(`Tunnel → ${base}`)
       setTab('live')
     } catch (e) {
-      setStatus('Disconnected')
       setLocalPort(null)
       setMeta(null)
       setLive(null)
@@ -245,7 +274,6 @@ export function App() {
   const disconnect = async () => {
     stopPolling()
     setError(null)
-    setStatus('Disconnecting…')
     setLocalPort(null)
     setMeta(null)
     setLive(null)
@@ -256,7 +284,6 @@ export function App() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     }
-    setStatus('Disconnected')
     setTab('connect')
   }
 
@@ -294,50 +321,17 @@ export function App() {
       <div className="artsky-host" aria-hidden>
         <ArtSky {...sky} />
       </div>
-      <div className="shell">
-      <aside className="nav">
-        <div className="brand">
-          <span className={`dot ${connected ? 'good' : ''}`} aria-hidden />
-          <div>
-            <p className="eyebrow eyebrow--nav">ICCP</p>
-            <h1>Command Center</h1>
-            <p className="brand-status">{status}</p>
-          </div>
-        </div>
-        <button type="button" className={tab === 'connect' ? 'active' : ''} onClick={() => setTab('connect')}>
-          Connect
-        </button>
-        <button
-          type="button"
-          className={tab === 'live' ? 'active' : ''}
-          onClick={() => setTab('live')}
-          disabled={!connected}
-        >
-          Live
-        </button>
-        <button
-          type="button"
-          className={tab === 'meta' ? 'active' : ''}
-          onClick={() => setTab('meta')}
-          disabled={!connected}
-        >
-          Controller meta
-        </button>
+      <div className="shell shell--single">
+        <V77SiteHeader
+          tab={tab}
+          setTab={setTab}
+          connected={connected}
+          appearance={appearance}
+          setAppearance={setAppearance}
+        />
 
-        <div className="appearance-row">
-          <label className="appearance-label">
-            <input
-              type="checkbox"
-              checked={appearance === 'light'}
-              onChange={(e) => setAppearance(e.target.checked ? 'light' : 'dark')}
-            />
-            <span>Light appearance</span>
-          </label>
-          <p className="appearance-hint">Ice-white sky (v77 shop · white-ice-blue)</p>
-        </div>
-      </aside>
-
-      <main className="content">
+        <main className="content">
+          <div className="content__viewport">
         {error ? (
           <div className="panel pad panel--danger">
             <div className="k">Error</div>
@@ -347,10 +341,14 @@ export function App() {
 
         {trustDegraded ? (
           <div className="panel pad panel--warn">
-            <div className="k">Telemetry</div>
+            <div className="k">Telemetry looks stale or incomplete</div>
             <div className="v">
-              Feed is stale or incomplete (feed_trust_channel_metrics / feed_ok). Channel metrics may
-              not reflect live control-plane state — see ICCP dashboard docs.
+              The Live tab is still <strong>live HTTP</strong> from the Pi dashboard; it is not reading old files
+              from your Mac. The dashboard is serving whatever is on disk (<code>latest.json</code>). If the
+              controller is stopped or uses a <strong>different log directory</strong> than the dashboard, ages
+              stay high. On <strong>Pi console</strong> try <code>iccp live</code>, <code>systemctl status iccp</code>, or{' '}
+              <code>command -v iccp</code> (login shell is on by default). Align <code>COILSHIELD_LOG_DIR</code> with{' '}
+              <code>/api/meta</code> paths (Meta tab).
             </div>
           </div>
         ) : null}
@@ -362,7 +360,7 @@ export function App() {
                 Save profile
               </button>
               <button type="button" className="primary" onClick={() => void connect()} disabled={connected || !draft}>
-                SSH + tunnel
+                Connect
               </button>
               <button type="button" className="ghost" onClick={() => void disconnect()} disabled={!connected}>
                 Disconnect
@@ -374,10 +372,16 @@ export function App() {
                 Remove profile
               </button>
             </div>
+            <p className="hint connect-explainer">
+              <strong>Connect</strong> opens an SSH session to the Pi. Unless disabled below, it then runs{' '}
+              <code className="mono">iccp dashboard</code> on the Pi (background) and forwards that port to this machine
+              as <code className="mono">http://127.0.0.1:…</code> (same idea as <code className="mono">ssh -L</code>
+              ). Telemetry tabs call that HTTP API. <strong>Pi console</strong> (after connect) runs shell commands on
+              the Pi over the same SSH link — that is where real shell commands run (see Pi console presets).
+            </p>
             {profileDirty ? (
               <p className="hint">
-                Unsaved changes — use Save profile before switching away, or SSH + tunnel saves automatically when you
-                connect.
+                Unsaved changes — use Save profile before switching away, or Connect saves the profile when you link.
               </p>
             ) : null}
 
@@ -509,6 +513,39 @@ export function App() {
                     }
                   />
                 </div>
+                <div className="card wide" style={{ gridColumn: 'span 12' }}>
+                  <label className="k field-label" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <input
+                      type="checkbox"
+                      checked={draft.autoStartDashboard !== false}
+                      onChange={(e) => patchDraft({ autoStartDashboard: e.target.checked })}
+                    />
+                    <span>Start dashboard on connect</span>
+                  </label>
+                  <p className="hint" style={{ marginTop: 8, marginBottom: 0 }}>
+                    Runs <code className="mono">nohup iccp dashboard --host … --port …</code> on the Pi (see{' '}
+                    <code className="mono">/tmp/iccp-desktop-dashboard.log</code> there), then opens the SSH tunnel.
+                    Turn off if you already run the dashboard via systemd.
+                  </p>
+                </div>
+                <div className="card wide">
+                  <div className="k">Dashboard start command (optional override)</div>
+                  <textarea
+                    className="mono input-textarea"
+                    rows={2}
+                    placeholder={buildDefaultDashboardStartCommand(draft)}
+                    value={draft.dashboardStartCommand ?? ''}
+                    onChange={(e) =>
+                      patchDraft({
+                        dashboardStartCommand: e.target.value.trim() === '' ? undefined : e.target.value,
+                      })
+                    }
+                  />
+                  <p className="hint" style={{ marginTop: 6, marginBottom: 0 }}>
+                    Leave empty to use the default launcher above. Same login shell and <code className="mono">remoteEnvLines</code>{' '}
+                    as Pi console.
+                  </p>
+                </div>
                 <div className="card wide">
                   <div className="k">remoteEnvLines (optional, one export per line)</div>
                   <textarea
@@ -537,13 +574,28 @@ export function App() {
             <div className="row" style={{ marginBottom: 10 }}>
               <span className="muted mono">{apiBase}</span>
               <span className="muted">
-                Polling ~{livePollIntervalMs(meta)} ms
-                {meta?.sample_interval_s != null ? ` (sample_interval_s=${meta.sample_interval_s})` : ''}
+                Polling ~{livePollIntervalMs(meta)} ms (all tabs, while connected)
+                {meta?.sample_interval_s != null ? ` · sample_interval_s=${meta.sample_interval_s}` : ''}
               </span>
             </div>
             {liveError ? <div className="v text-bad">{liveError}</div> : null}
-            <pre className="log mono">{live ? JSON.stringify(live, null, 2) : 'Loading…'}</pre>
+            <LiveDashboard apiBase={apiBase} live={live} meta={meta} />
           </div>
+        ) : null}
+
+        {tab === 'console' ? (
+          connected ? (
+            <PiConsole connected />
+          ) : (
+            <div className="panel pad">
+              <h2 className="console-gate__title">Run commands on the Pi</h2>
+              <p className="v">
+                After you <strong>Connect</strong>, this tab sends shell commands over the same SSH session (
+                <code className="mono">ssh2 exec</code>). That is separate from the HTTP forward: telemetry comes from
+                the dashboard API; shell inspection and your own commands (whatever is installed on the Pi) happen here.
+              </p>
+            </div>
+          )
         ) : null}
 
         {tab === 'meta' && apiBase ? (
@@ -553,10 +605,11 @@ export function App() {
                 Refresh /api/meta
               </button>
             </div>
-            <pre className="log mono">{meta ? JSON.stringify(meta, null, 2) : 'Loading…'}</pre>
+            <MetaSummary meta={meta} apiBase={apiBase} />
           </div>
         ) : null}
-      </main>
+          </div>
+        </main>
       </div>
     </div>
   )

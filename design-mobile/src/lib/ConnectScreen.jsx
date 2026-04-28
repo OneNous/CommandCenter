@@ -218,11 +218,17 @@ export function ConnectScreen() {
           <pre style={{ margin: '10px 0 0', fontSize: 10.5, color: T.muted, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{tunnel}</pre>
         </Card>
 
-        <Eyebrow style={{ margin: '16px 4px 8px', color: T.muted }}>Remote commands (run via Desktop SSH or Pi shell)</Eyebrow>
+        <Eyebrow style={{ margin: '16px 4px 8px', color: T.muted }}>
+          ICCP CLI (wrapped <code className="mono">bash -lc</code> — same idea as Desktop Pi console)
+        </Eyebrow>
         {[
+          { label: 'iccp start', cmd: 'iccp start' },
+          { label: 'iccp commission', cmd: 'iccp commission' },
+          { label: 'iccp probe', cmd: 'iccp probe' },
           { label: 'iccp live', cmd: 'iccp live' },
-          { label: 'systemctl status', cmd: 'systemctl --no-pager status iccp' },
-          { label: 'iccp diag', cmd: 'iccp diag --request' },
+          { label: 'iccp version', cmd: 'iccp version' },
+          { label: 'iccp diag --request', cmd: 'iccp diag --request' },
+          { label: 'systemctl status iccp', cmd: 'systemctl --no-pager status iccp 2>&1 | head -50' },
         ].map((row) => {
           const wrapped = app.buildRemoteExecShell(d, row.cmd)
           return (

@@ -59,6 +59,8 @@ if [[ ! -d "$MOBILE_PKG/node_modules" ]]; then
 fi
 
 echo "Starting CoilShield ICCP mobile app (Vite)…"
+echo "→ Your browser should open automatically. If not, open the “Local” URL Vite prints (port may not be 5173)."
+echo "→ For design artboards only, use “Launch Design Canvas.command” (dev:design)."
 run_npm run dev --prefix "$MOBILE_PKG"
 
 echo ""

@@ -6,13 +6,14 @@ CoilShield / ICCP companion apps: **Electron desktop** (SSH, port-forward, `iccp
 
 See **`desktop/INTEGRATION.md`** for the connect sequence (`sessionSetProfile` → SSH → tunnel → `/api/meta` → `/api/live`), Pi prerequisites, and field notes (dashboard bind, `sudo` over SSH).
 
-From a terminal, first-time install in `desktop/`: `npm install --legacy-peer-deps` (resolves the current `electron-vite` / Vite peer range mismatch). **`Launch Command Center.command`** uses the same flags on first run.
+From a terminal, first-time install in `desktop/`: `npm install --legacy-peer-deps` (resolves the current `electron-vite` / Vite peer range mismatch). **`ICCP Command Center.command`** (or **`ICCP Command Center.app`**) uses the same flags on first run.
 
 ## Launch on macOS (one double-click)
 
 In Finder, open this repo and double-click:
 
-- **`Launch Command Center.command`** — installs `desktop/` deps if needed, then runs the Electron app (`npm run dev`).
+- **`ICCP Command Center.app`** — double-click launcher with app icon; installs `desktop/` deps if needed, then runs the Electron app (`npm run dev`).
+- **`ICCP Command Center.command`** — same behavior in Terminal (window stays open after quit).
 - **`Launch Mobile App.command`** — installs `design-mobile/` deps if needed, then runs the **app shell** (login + tabs) in the browser.
 - **`Launch Design Canvas.command`** — runs the **design canvas** in `design-mobile/` (artboards + tweaks): `npm run dev:design`.
 

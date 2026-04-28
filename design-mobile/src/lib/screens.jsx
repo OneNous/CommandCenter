@@ -1645,8 +1645,8 @@ export function BottomTabs({ tab, setTab, platform = 'ios', items }) {
         bottom: 0,
         paddingBottom: `calc(${bottomPad}px + env(safe-area-inset-bottom, 0px))`,
         background: T.tabBarFade,
-        pointerEvents: 'none',
-        zIndex: 30,
+        pointerEvents: 'auto',
+        zIndex: 40,
       }}
     >
       <div
@@ -1660,7 +1660,6 @@ export function BottomTabs({ tab, setTab, platform = 'ios', items }) {
           gap: 4,
           backdropFilter: 'blur(18px) saturate(140%)',
           WebkitBackdropFilter: 'blur(18px) saturate(140%)',
-          pointerEvents: 'auto',
           boxShadow: T.tabBarShadow,
         }}
       >
@@ -1686,6 +1685,8 @@ export function BottomTabs({ tab, setTab, platform = 'ios', items }) {
                 fontFamily: T.fontSans,
                 letterSpacing: '-0.01em',
                 opacity: dis ? 0.45 : 1,
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
               {t.label}

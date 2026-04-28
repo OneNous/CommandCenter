@@ -46,6 +46,16 @@ export type ConnectionProfile = {
   remoteDashboardHost: string
   /** Dashboard listen port on the Pi (forward target), e.g. 8080 for `iccp dashboard`. */
   remoteDashboardPort: number
+  /**
+   * When true (default), after SSH connects the app runs a remote command to start the dashboard
+   * (`nohup iccp dashboard … &`) before opening the port-forward tunnel.
+   */
+  autoStartDashboard?: boolean
+  /**
+   * Optional shell command run on the Pi (login shell + `remoteEnvLines`) instead of the default
+   * `iccp dashboard` launcher. Use when the dashboard is started via systemd or a custom script.
+   */
+  dashboardStartCommand?: string
   /** Optional `KEY=value` lines applied before remote `iccp` / `systemctl` commands. */
   remoteEnvLines?: string[]
 }

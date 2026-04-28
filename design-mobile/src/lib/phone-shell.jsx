@@ -8,17 +8,34 @@ import {
   BottomTabs,
   ChannelDetailSheet,
   DashboardScreen,
+  Eyebrow,
   Mono,
   ReportsScreen,
   SettingsScreen,
   T,
 } from './screens.jsx'
 
+/** `PhoneShell` is used without `AppProvider` in design-canvas artboards — Connect/Meta need context. */
+function PreviewNeedProvider({ name }) {
+  return (
+    <div style={{ padding: 'max(24px, env(safe-area-inset-top)) 24px 120px', color: T.text, fontFamily: T.fontSans }}>
+      <Eyebrow>Design preview</Eyebrow>
+      <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.5, marginTop: 12 }}>
+        The {name} screen needs <code style={{ color: T.accent }}>AppProvider</code>. Use{' '}
+        <strong>Launch Mobile App</strong> for the real shell, or wrap this preview in <code>AppProvider</code>.
+      </p>
+    </div>
+  )
+}
+
 function shellTabFor(app, tab) {
   if (!app) return tab
   if (!app.httpConnected && (tab === 'dash' || tab === 'meta' || tab === 'trends')) return 'connect'
   return tab
 }
+
+/** Main scroll view must not extend under the tab bar — mobile WebKit often delivers taps to the scroll layer instead. */
+const TAB_BAR_SCROLL_INSET_BOTTOM = 'calc(96px + env(safe-area-inset-bottom, 0px))'
 
 export const ACCENTS = {
   sky: { accent: '#7dd3fc', accentS: '#38bdf8', accentSoft: 'rgba(56,189,248,0.14)' },
@@ -204,7 +221,7 @@ export function PhoneShell({ platform, initialTab = 'dash', sky, contentBg = '#0
     <SettingsScreen />
   )
 
-  const connect = app ? <ConnectScreen /> : null
+  const connect = app ? <ConnectScreen /> : <PreviewNeedProvider name="Connect" />
   const meta = app ? (
     <MetaScreen
       apiBase={app.apiBase}
@@ -213,7 +230,9 @@ export function PhoneShell({ platform, initialTab = 'dash', sky, contentBg = '#0
       onRefresh={() => void app.fetchMetaNow()}
       refreshing={app.refreshing}
     />
-  ) : null
+  ) : (
+    <PreviewNeedProvider name="Meta" />
+  )
 
   const screen =
     shellTab === 'connect'
@@ -232,11 +251,33 @@ export function PhoneShell({ platform, initialTab = 'dash', sky, contentBg = '#0
     app && app.selectedChIdx != null ? app.liveData.channels.find((c) => c.idx === app.selectedChIdx) : null
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: contentBg }}>
+    <div
+      style={{
+        position: 'relative',
+        flex: 1,
+        minHeight: 0,
+        width: '100%',
+        overflow: 'hidden',
+        background: contentBg,
+      }}
+    >
       <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
         <ArtSky {...sky} />
       </div>
-      <div style={{ position: 'absolute', inset: 0, zIndex: 1, overflow: 'auto' }}>{screen}</div>
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          bottom: TAB_BAR_SCROLL_INSET_BOTTOM,
+          zIndex: 1,
+          overflow: 'auto',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {screen}
+      </div>
       <BottomTabs tab={shellTab} setTab={setTab} platform={platform} items={tabItems} />
       {app && (
         <ChannelDetailSheet

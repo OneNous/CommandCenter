@@ -29,7 +29,12 @@ export type ApiLive = {
   feed_ok?: boolean
   feed_trust_channel_metrics?: boolean
   feed_age_s?: number
+  /** Age of ``latest.json`` on disk from mtime (controller not writing if large). */
+  feed_file_mtime_unix?: number
   json_payload_age_s?: number
+  feed_stale_threshold_s?: number
+  /** From dashboard: ``file_mtime`` / ``json_ts`` / ``telemetry_incomplete``. */
+  feed_stale_reasons?: string[]
   telemetry_incomplete?: boolean
   channels?: Record<string, unknown>
   [key: string]: unknown

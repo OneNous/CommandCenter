@@ -1,25 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 html,
-body,
-#root {
+body {
   height: 100%;
   margin: 0;
 }
 
+/* Percentage heights need a defined chain; min-height alone leaves children at 0× tall → blank SPA. */
 #root {
   width: 100%;
   max-width: none;
   text-align: initial;
   border: none;
+  min-height: 100%;
+  min-height: 100dvh;
   min-height: 100svh;
+  display: flex;
+  flex-direction: column;
 }
 
 .mobile-app-root {
   box-sizing: border-box;
   width: 100%;
-  min-height: 100dvh;
-  min-height: 100svh;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   position: relative;
   padding-top: env(safe-area-inset-top, 0px);
