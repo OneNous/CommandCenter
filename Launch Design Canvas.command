@@ -16,8 +16,30 @@ if [[ -s "$NVM_DIR/nvm.sh" ]]; then
   . "$NVM_DIR/nvm.sh"
 fi
 
-if ! command -v npm >/dev/null 2>&1; then
-  osascript -e 'display alert "Command Center" message "npm was not found. Install Node.js (https://nodejs.org) or ensure nvm is set up, then try again." as critical'
+resolve_npm_bin() {
+  local p=""
+  if [[ "$(type -t npm 2>/dev/null)" == function ]] && declare -F nvm >/dev/null 2>&1; then
+    p="$(nvm which npm 2>/dev/null || true)"
+    if [[ -n "$p" && -x "$p" ]]; then
+      echo "$p"
+      return
+    fi
+  fi
+  local node_bin dir
+  node_bin="$(command -v node 2>/dev/null || true)"
+  if [[ -n "$node_bin" ]]; then
+    dir="$(dirname "$node_bin")"
+    if [[ -x "$dir/npm" ]]; then
+      echo "$dir/npm"
+      return
+    fi
+  fi
+  command -v npm 2>/dev/null || true
+}
+
+NPM_BIN="$(resolve_npm_bin)"
+if [[ -z "$NPM_BIN" || ! -x "$NPM_BIN" ]]; then
+  osascript -e 'display alert "Command Center" message "Could not find a real npm binary (nvm/Homebrew PATH issue). Open Terminal, run: nvm use default  then try again." as critical'
   exit 1
 fi
 
@@ -27,15 +49,17 @@ if [[ ! -d "$CANVAS_PKG" ]]; then
   exit 1
 fi
 
-cd /tmp
+run_npm() {
+  ( cd /tmp && "$NPM_BIN" "$@" )
+}
 
 if [[ ! -d "$CANVAS_PKG/node_modules" ]]; then
   echo "Installing design-mobile dependencies (first run only)…"
-  npm install --prefix "$CANVAS_PKG"
+  run_npm install --prefix "$CANVAS_PKG"
 fi
 
 echo "Starting Design Canvas (Vite)…"
-npm run dev --prefix "$CANVAS_PKG"
+run_npm run dev --prefix "$CANVAS_PKG"
 
 echo ""
 read -r -p "Press Enter to close this window…" _
