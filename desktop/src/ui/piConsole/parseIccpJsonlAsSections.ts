@@ -1,54 +1,18 @@
 import type { ParsedIccpCli } from './parseIccpCliSections'
-
-type JsonlEvent = {
-  schema?: string
-  ts_unix?: number
-  level?: string
-  cmd?: string
-  source?: string
-  event?: string
-  msg?: string
-  data?: unknown
-  err?: unknown
-  [key: string]: unknown
-}
-
-function tryParseLine(line: string): JsonlEvent | null {
-  const t = line.trim()
-  if (!t || t[0] !== '{') return null
-  try {
-    const o = JSON.parse(t) as unknown
-    if (!o || typeof o !== 'object') return null
-    return o as JsonlEvent
-  } catch {
-    return null
-  }
-}
+import { parseIccpCliJsonl } from './parseIccpCliJsonl'
 
 /**
- * Parse ICCP JSONL output (one object per line) into the existing ParsedIccpCli
- * shape so the UI can reuse `IccpCliSectionsDashboard`.
+ * Parse ICCP JSONL into the legacy `ParsedIccpCli` shape for `IccpCliSectionsDashboard`.
  */
 export function parseIccpJsonlAsSections(combinedText: string): ParsedIccpCli | null {
-  const raw = combinedText.replace(/\r\n/g, '\n')
-  const lines = raw.split('\n').filter((l) => l.trim().length > 0)
-  if (lines.length === 0) return null
-
-  const parsed: JsonlEvent[] = []
-  for (const ln of lines) {
-    const ev = tryParseLine(ln)
-    if (ev && ev.schema === 'iccp.cli.event.v1') parsed.push(ev)
-  }
-
-  // Require that a meaningful fraction of lines are valid ICCP JSONL.
-  if (parsed.length < 2) return null
-  if (parsed.length / lines.length < 0.6) return null
+  const parsed = parseIccpCliJsonl(combinedText)
+  if (!parsed) return null
 
   const sections: ParsedIccpCli['sections'] = []
   const byKey = new Map<string, string[]>()
   const order: string[] = []
 
-  for (const ev of parsed) {
+  for (const ev of parsed.events) {
     const key = `${ev.cmd ?? 'cmd'} · ${ev.event ?? 'event'}`
     if (!byKey.has(key)) {
       byKey.set(key, [])
@@ -69,4 +33,3 @@ export function parseIccpJsonlAsSections(combinedText: string): ParsedIccpCli | 
 
   return { preamble: [], sections }
 }
-

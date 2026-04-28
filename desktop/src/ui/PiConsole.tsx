@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState, type CSSProperties } from 'react'
 import { CliLiveDashboard } from './piConsole/CliLiveDashboard'
+import { IccpCliJsonlDashboard } from './piConsole/IccpCliJsonlDashboard'
 import { IccpCliSectionsDashboard, IccpPlainOpsCard } from './piConsole/IccpCliSectionsDashboard'
 import { tryParseIccpLiveSnapshot } from './piConsole/extractIccpLiveJson'
+import { parseIccpCliJsonl } from './piConsole/parseIccpCliJsonl'
 import { parseIccpCliSections } from './piConsole/parseIccpCliSections'
-import { parseIccpJsonlAsSections } from './piConsole/parseIccpJsonlAsSections'
 import { Sparkline } from './piConsole/Sparkline'
 import type { PiPreset, PiRunRecord } from './piConsole/types'
 import { Card, Eyebrow, Mono, ScreenHeader } from './reference/primitives'
@@ -19,6 +20,13 @@ const PRESETS: PiPreset[] = [
     hint: 'Fails if another controller is active — stop first: sudo systemctl stop iccp',
   },
   { id: 'iccp-probe', label: 'iccp probe', command: 'iccp probe', group: 'ICCP · ops' },
+  {
+    id: 'iccp-commission-human',
+    label: 'iccp commission (human)',
+    command: 'iccp commission --human',
+    group: 'ICCP · ops',
+    hint: 'Legacy section parsing / operator view',
+  },
   { id: 'iccp-live', label: 'iccp live', command: 'iccp live', group: 'ICCP · telemetry', hint: 'CLI snapshot (Live tab is HTTP JSON)' },
   { id: 'iccp-version', label: 'iccp version', command: 'iccp version', group: 'ICCP · meta' },
   { id: 'iccp-diag', label: 'iccp diag', command: 'iccp diag --request', group: 'ICCP · meta' },
@@ -32,7 +40,12 @@ const MAX_RUNS = 32
 const CUSTOM_ID = 'custom'
 
 /** Presets whose logs should use dashboard-style cards (tag parsing or single card fallback). */
-const OPS_DASH_PRESETS = new Set(['iccp-start', 'iccp-commission', 'iccp-probe'])
+const OPS_DASH_PRESETS = new Set([
+  'iccp-start',
+  'iccp-commission',
+  'iccp-commission-human',
+  'iccp-probe',
+])
 
 function presetLabel(id: string | null | undefined): string {
   if (!id || id === CUSTOM_ID) return 'Custom'
@@ -114,10 +127,15 @@ function RunOutputBody({
     [run.stderr, run.stdout],
   )
 
-  const parsedCli = useMemo(() => {
+  const jsonlData = useMemo(() => {
     if (run.error) return null
-    return parseIccpJsonlAsSections(combined) ?? parseIccpCliSections(combined)
+    return parseIccpCliJsonl(combined)
   }, [run.error, combined])
+
+  const parsedCli = useMemo(() => {
+    if (run.error || jsonlData) return null
+    return parseIccpCliSections(combined)
+  }, [run.error, combined, jsonlData])
 
   const exitOk = !run.error && run.code === 0
   const exitSubtitle = run.error ? 'SSH error' : `Exit ${run.code ?? '—'}`
@@ -188,6 +206,40 @@ function RunOutputBody({
             }}
           >
             {run.stdout.trimEnd()}
+          </pre>
+        </details>
+        <Mono size={10} color={T.muted} style={{ display: 'block', marginTop: 10 }}>
+          {exitLine}
+        </Mono>
+      </>
+    )
+  }
+
+  if (jsonlData && jsonlData.events.length > 0) {
+    return (
+      <>
+        <IccpCliJsonlDashboard
+          title={presetLabel(presetId)}
+          subtitle={exitSubtitle}
+          exitOk={exitOk}
+          events={jsonlData.events}
+        />
+        <details style={{ marginTop: 14, color: T.muted }}>
+          <summary style={{ cursor: 'pointer', fontFamily: T.fontSans, fontSize: 12 }}>
+            Raw log (stderr + stdout verbatim)
+          </summary>
+          <pre
+            className="log mono"
+            style={{
+              ...box({
+                border: `1px solid ${T.border}`,
+                background: 'rgba(255,255,255,0.03)',
+                maxHeight: hero ? 'min(28vh, 240px)' : 160,
+              }),
+              marginTop: 8,
+            }}
+          >
+            {combined.trimEnd()}
           </pre>
         </details>
         <Mono size={10} color={T.muted} style={{ display: 'block', marginTop: 10 }}>

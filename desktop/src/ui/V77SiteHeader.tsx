@@ -10,16 +10,17 @@ const NAV_WORDMARK_PALETTE = ['f', 'l', 'i', 'p'] as const
 type Props = {
   tab: AppTabId
   setTab: (t: AppTabId) => void
-  connected: boolean
+  sshLinked: boolean
+  hasApi: boolean
   appearance: 'light' | 'dark'
   setAppearance: (a: 'light' | 'dark') => void
 }
 
-const ITEMS: { id: AppTabId; label: string; needsConn: boolean }[] = [
-  { id: 'connect', label: 'Connect', needsConn: false },
-  { id: 'live', label: 'Live', needsConn: true },
-  { id: 'console', label: 'Pi console', needsConn: true },
-  { id: 'meta', label: 'Controller meta', needsConn: true },
+const ITEMS: { id: AppTabId; label: string; needsSsh: boolean; needsApi: boolean }[] = [
+  { id: 'connect', label: 'Connect', needsSsh: false, needsApi: false },
+  { id: 'live', label: 'Live', needsSsh: false, needsApi: true },
+  { id: 'console', label: 'Pi console', needsSsh: true, needsApi: false },
+  { id: 'meta', label: 'Controller meta', needsSsh: false, needsApi: true },
 ]
 
 function prefersReducedMotion(): boolean {
@@ -33,7 +34,8 @@ function prefersReducedMotion(): boolean {
 export function V77SiteHeader({
   tab,
   setTab,
-  connected,
+  sshLinked,
+  hasApi,
   appearance,
   setAppearance,
 }: Props) {
@@ -202,7 +204,7 @@ export function V77SiteHeader({
                             <li key={item.id}>
                               <button
                                 type="button"
-                                disabled={item.needsConn && !connected}
+                                disabled={(item.needsSsh && !sshLinked) || (item.needsApi && !hasApi)}
                                 className="iccp-nav-mega-link"
                                 onClick={() => pickTab(item.id)}
                               >

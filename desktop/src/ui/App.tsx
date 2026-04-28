@@ -58,6 +58,7 @@ export function App() {
     typeof window !== 'undefined' ? readStoredAppearance() : 'dark',
   )
   const [tab, setTab] = useState<TabId>('connect')
+  const [sshLinked, setSshLinked] = useState(false)
   const [profiles, setProfiles] = useState<ConnectionProfile[]>([])
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -224,44 +225,55 @@ export function App() {
       setProfileDirty(false)
       await window.iccp.sessionSetProfile(toUse)
       await window.iccp.sshConnect(profileToConnectParams(toUse))
+      setSshLinked(true)
 
-      if (toUse.autoStartDashboard !== false) {
-        const custom = toUse.dashboardStartCommand?.trim()
-        const cmd = custom ? custom : buildDefaultDashboardStartCommand(toUse)
-        await window.iccp.sshExec({ command: cmd, wrapEnv: true })
-      }
+      try {
+        if (toUse.autoStartDashboard !== false) {
+          const custom = toUse.dashboardStartCommand?.trim()
+          const cmd = custom ? custom : buildDefaultDashboardStartCommand(toUse)
+          await window.iccp.sshExec({ command: cmd, wrapEnv: true })
+        }
 
-      const tunnelParams = {
-        remoteHost: toUse.remoteDashboardHost,
-        remotePort: toUse.remoteDashboardPort,
-      }
-      const maxAttempts = toUse.autoStartDashboard !== false ? 16 : 4
-      let port: number | undefined
-      let lastErr: unknown
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        try {
-          ;({ localPort: port } = await window.iccp.tunnelStart(tunnelParams))
-          break
-        } catch (e) {
-          lastErr = e
-          if (attempt < maxAttempts - 1) {
-            await new Promise((r) => setTimeout(r, 450))
+        const tunnelParams = {
+          remoteHost: toUse.remoteDashboardHost,
+          remotePort: toUse.remoteDashboardPort,
+        }
+        const maxAttempts = toUse.autoStartDashboard !== false ? 16 : 4
+        let port: number | undefined
+        let lastErr: unknown
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          try {
+            ;({ localPort: port } = await window.iccp.tunnelStart(tunnelParams))
+            break
+          } catch (e) {
+            lastErr = e
+            if (attempt < maxAttempts - 1) {
+              await new Promise((r) => setTimeout(r, 450))
+            }
           }
         }
-      }
-      if (port == null) {
-        throw lastErr instanceof Error ? lastErr : new Error(String(lastErr))
-      }
+        if (port == null) {
+          throw lastErr instanceof Error ? lastErr : new Error(String(lastErr))
+        }
 
-      setLocalPort(port)
-      const base = makeApiBase(port)
-      await fetchMeta(base)
-      setTab('live')
+        setLocalPort(port)
+        const base = makeApiBase(port)
+        await fetchMeta(base)
+        setTab('live')
+      } catch (e) {
+        // SSH is up, but dashboard/tunnel failed. Keep SSH linked so Pi console still works.
+        setLocalPort(null)
+        setMeta(null)
+        setLive(null)
+        setError(e instanceof Error ? e.message : String(e))
+        setTab('console')
+      }
     } catch (e) {
       setLocalPort(null)
       setMeta(null)
       setLive(null)
       setError(e instanceof Error ? e.message : String(e))
+      setSshLinked(false)
       try {
         await window.iccp.tunnelStop()
         await window.iccp.sshDisconnect()
@@ -274,6 +286,7 @@ export function App() {
   const disconnect = async () => {
     stopPolling()
     setError(null)
+    setSshLinked(false)
     setLocalPort(null)
     setMeta(null)
     setLive(null)
@@ -314,7 +327,8 @@ export function App() {
     live != null &&
     (live.feed_trust_channel_metrics === false || live.feed_ok === false)
 
-  const connected = localPort != null
+  const hasApi = localPort != null
+  const connected = sshLinked
 
   return (
     <div className="app-root">
@@ -325,7 +339,8 @@ export function App() {
         <V77SiteHeader
           tab={tab}
           setTab={setTab}
-          connected={connected}
+          sshLinked={sshLinked}
+          hasApi={hasApi}
           appearance={appearance}
           setAppearance={setAppearance}
         />
@@ -584,7 +599,7 @@ export function App() {
         ) : null}
 
         {tab === 'console' ? (
-          connected ? (
+          sshLinked ? (
             <PiConsole connected />
           ) : (
             <div className="panel pad">

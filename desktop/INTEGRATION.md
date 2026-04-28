@@ -45,6 +45,10 @@ The desktop **Connect** flow is still: SSH session + **direct-tcpip** forward of
 
 Tunneling to **`127.0.0.1:<dashboard-port>`** on the Pi is correct for the default dashboard. If operators bind the dashboard with **`--host 127.0.0.1`**, LAN access disappears but **SSH local forward still works** — document that choice for the field team.
 
+### `iccp` CLI output (JSONL vs human)
+
+Recent CoilShield builds default **`iccp`** to **JSONL** on stdout (`iccp.cli.event.v1`, one JSON object per line) so this app’s **Pi console** can parse progress and errors without regex. Operators who want the classic tables and banners should run **`iccp --human …`** (or **`iccp <subcommand> --human`**). The desktop Pi console detects JSONL automatically and renders a structured timeline; `--human` output still uses the legacy section parser.
+
 ### `iccp` / `systemctl` over SSH
 
 - Prefer explicit paths or `command -v iccp` for **non-login** shells.
