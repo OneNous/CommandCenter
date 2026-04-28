@@ -3,6 +3,7 @@ import { CliLiveDashboard } from './piConsole/CliLiveDashboard'
 import { IccpCliSectionsDashboard, IccpPlainOpsCard } from './piConsole/IccpCliSectionsDashboard'
 import { tryParseIccpLiveSnapshot } from './piConsole/extractIccpLiveJson'
 import { parseIccpCliSections } from './piConsole/parseIccpCliSections'
+import { parseIccpJsonlAsSections } from './piConsole/parseIccpJsonlAsSections'
 import { Sparkline } from './piConsole/Sparkline'
 import type { PiPreset, PiRunRecord } from './piConsole/types'
 import { Card, Eyebrow, Mono, ScreenHeader } from './reference/primitives'
@@ -115,7 +116,7 @@ function RunOutputBody({
 
   const parsedCli = useMemo(() => {
     if (run.error) return null
-    return parseIccpCliSections(combined)
+    return parseIccpJsonlAsSections(combined) ?? parseIccpCliSections(combined)
   }, [run.error, combined])
 
   const exitOk = !run.error && run.code === 0
