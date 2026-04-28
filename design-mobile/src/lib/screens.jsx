@@ -126,11 +126,13 @@ function pillStateStyle(state) {
 export const FIXTURE = {
   now: 'Apr 21, 14:32',
   feedAge: 0.32,
+  jsonAge: 0.28,
   simMode: true,
   tempF: 68.4,
   supplyV: 4.85,
   totalMa: 6.724,
   totalPowW: 0.031,
+  staleReasons: [],
   channels: [
     { idx: 0, name: 'Anode 1', state: 'PROTECTING', ma: 1.681, target: 1.7, bus: 4.852, duty: 42.0, z: 2881, energyJ: 137.42, wet: 14 },
     { idx: 1, name: 'Anode 2', state: 'PROTECTING', ma: 1.712, target: 1.7, bus: 4.841, duty: 44.5, z: 2755, energyJ: 132.05, wet: 12 },
@@ -368,9 +370,13 @@ export function DashboardScreen({
   onDismissAlert,
 }) {
   const protCount = data.channels.filter((c) => c.state === 'PROTECTING').length
+  const fileLabel = typeof data.feedAge === 'number' ? data.feedAge.toFixed(2) : '?'
+  const jsonLabel = typeof data.jsonAge === 'number' ? data.jsonAge.toFixed(2) : null
   const sub =
     subtitle ??
-    `Live · feed ${typeof data.feedAge === 'number' ? data.feedAge.toFixed(2) : '?'}s · ${data.simMode ? 'SIM' : 'LIVE'}`
+    (jsonLabel != null
+      ? `Live · file ${fileLabel}s · json ${jsonLabel}s · ${data.simMode ? 'SIM' : 'LIVE'}`
+      : `Live · feed ${fileLabel}s · ${data.simMode ? 'SIM' : 'LIVE'}`)
   const fault = data.channels.some((c) => c.state === 'FAULT')
   const dotColor = fault ? T.red : data.feedTrust === false ? T.amber : T.green
   return (

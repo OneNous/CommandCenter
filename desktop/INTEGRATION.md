@@ -28,6 +28,13 @@ The desktop **Connect** flow is still: SSH session + **direct-tcpip** forward of
 
 `/api/live` returns what the **dashboard process** reads from disk (`latest.json` under the resolved log dir). It is **not** your Mac reading old copies. If `feed_age_s` / `json_payload_age_s` stay high while the system should be updating, typical causes are: **controller process not running**, **dashboard and controller using different `COILSHIELD_LOG_DIR`**, or the controller stopped writing. Confirm paths in **`/api/meta`** and on the Pi use normal diagnostics (`uptime`, `ps`, `systemctl` / `journalctl` as appropriate for your install).
 
+### Pi troubleshooting notes (systemd)
+
+- **Controller starts then immediately stops / restarts**: check `journalctl -u iccp` for `ExecStartPre=` failures. A missing pre-hook script (common when operators copy a unit file but not the script it references) will prevent `iccp start` from running at all.
+- **Service is `active (running)` but `latest.json` never updates**: confirm you are looking at the same `latest_json` path reported by `GET /api/meta`, then `stat` it directly on the Pi. If the controller is running and logging `[tick]` but `latest.json` mtime is old, the controller and dashboard are almost certainly pointed at different log dirs.
+- **`iccp start` complains “systemd unit 'iccp' is already active”**: this means you are launching a *foreground* controller while the systemd service is also active (or `iccp` is being run as the service `ExecStart` but is still doing the foreground safety check). Use one controller owner: `sudo systemctl start iccp` (service), or `iccp start --force` only if you know the service is stopped.
+- **Commissioning stops live telemetry**: `iccp commission` is allowed to stop `iccp` via systemd sync so it can own PWM/GPIO exclusively. Expect the dashboard to look “stuck” during that window; restart `iccp` when commissioning is complete.
+
 ## Minimum Pi prerequisites
 
 - Controller running: `iccp start` (or `systemctl start iccp`).

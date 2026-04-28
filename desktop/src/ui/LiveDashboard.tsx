@@ -199,6 +199,18 @@ export function LiveDashboard({
         <Card style={{ padding: 14 }}>
           <Row k="File age (mtime) · feed_age_s" v={d.fileAgeS != null ? humanAgeSeconds(d.fileAgeS) : '—'} />
           <Row k="JSON ts age" v={d.jsonAgeS != null ? humanAgeSeconds(d.jsonAgeS) : '—'} />
+          <Row
+            k="feed_stale_threshold_s"
+            v={typeof live.feed_stale_threshold_s === 'number' ? String(live.feed_stale_threshold_s) : '—'}
+          />
+          <Row
+            k="telemetry_paths.latest_json"
+            v={
+              typeof (live.telemetry_paths as Record<string, unknown> | undefined)?.latest_json === 'string'
+                ? String((live.telemetry_paths as Record<string, unknown>).latest_json)
+                : '—'
+            }
+          />
           <Row k="feed_ok" v={String(d.feedOk)} />
           <Row k="Channel metrics trusted" v={String(d.trustMetrics)} />
           <div style={{ paddingTop: 8 }}>

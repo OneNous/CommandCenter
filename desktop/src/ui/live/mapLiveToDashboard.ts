@@ -184,11 +184,13 @@ export function mapLiveToDashboard(live: ApiLive, meta: ApiMeta | null): Dashboa
 
   const fileAge = num(live.feed_age_s)
   const jsonAge = num(live.json_payload_age_s)
-  const feedAgeForLabel = fileAge ?? jsonAge
-  const feedSubtitle =
-    feedAgeForLabel != null
-      ? `Live · feed ${feedAgeForLabel.toFixed(2)}s`
-      : 'Live · ICCP'
+  const feedSubtitle = (() => {
+    if (fileAge != null && jsonAge != null) {
+      return `Live · file ${fileAge.toFixed(2)}s · json ${jsonAge.toFixed(2)}s`
+    }
+    const s = fileAge ?? jsonAge
+    return s != null ? `Live · feed ${s.toFixed(2)}s` : 'Live · ICCP'
+  })()
 
   const feedOk = live.feed_ok !== false
   const trustMetrics = live.feed_trust_channel_metrics !== false

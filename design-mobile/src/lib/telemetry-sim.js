@@ -16,9 +16,13 @@ function sumMa(channels) {
 export function mapLiveJsonToFixture(j, fallback) {
   const next = deepCloneFixture(fallback)
   if (typeof j.feed_age_s === 'number') next.feedAge = j.feed_age_s
+  if (typeof j.json_payload_age_s === 'number') next.jsonAge = j.json_payload_age_s
   if (typeof j.feed_trust_channel_metrics === 'boolean') next.feedTrust = j.feed_trust_channel_metrics
   if (typeof j.feed_ok === 'boolean' && j.feed_trust_channel_metrics === undefined) {
     next.feedTrust = j.feed_ok
+  }
+  if (Array.isArray(j.feed_stale_reasons)) {
+    next.staleReasons = j.feed_stale_reasons.filter((x) => typeof x === 'string')
   }
   if (j.telemetry_incomplete) next.telemetryIncomplete = true
   if (typeof j.sim_mode === 'boolean') next.simMode = j.sim_mode
@@ -60,6 +64,9 @@ export function mapLiveJsonToFixture(j, fallback) {
  */
 export function tickTelemetry(data) {
   data.feedAge = +(data.feedAge + 0.08 + Math.random() * 0.06).toFixed(2)
+  if (typeof data.jsonAge === 'number') {
+    data.jsonAge = +(data.jsonAge + 0.08 + Math.random() * 0.06).toFixed(2)
+  }
   data.now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   for (const ch of data.channels) {
@@ -82,7 +89,11 @@ export function tickTelemetry(data) {
 
   rollSeries(data)
   if (typeof data.feedTrust === 'boolean') {
-    data.feedTrust = data.feedAge < 1.35 && !data.telemetryIncomplete
+    const worst = Math.max(
+      typeof data.feedAge === 'number' ? data.feedAge : 0,
+      typeof data.jsonAge === 'number' ? data.jsonAge : 0,
+    )
+    data.feedTrust = worst < 1.35 && !data.telemetryIncomplete
   }
 }
 

@@ -495,10 +495,13 @@ export function AppProvider({ children }) {
   )
 
   const dashHeader = useMemo(() => {
+    const fileLabel = liveData.feedAge?.toFixed?.(2) ?? '?'
+    const jsonLabel = typeof liveData.jsonAge === 'number' ? liveData.jsonAge.toFixed(2) : null
+    const sub = jsonLabel != null ? `Live · file ${fileLabel}s · json ${jsonLabel}s` : `Live · feed ${fileLabel}s`
     const fault = liveData.channels?.some((c) => c.state === 'FAULT')
-    if (fault) return { title: 'Attention needed', sub: `Live · feed ${liveData.feedAge?.toFixed?.(2) ?? '?'}s` }
+    if (fault) return { title: 'Attention needed', sub }
     if (liveData.feedTrust === false) return { title: 'Telemetry degraded', sub: 'Stale or incomplete feed' }
-    return { title: 'System OK', sub: `Live · feed ${liveData.feedAge?.toFixed?.(2) ?? '?'}s` }
+    return { title: 'System OK', sub }
   }, [liveData])
 
   const connectionDetail = useMemo(() => {
