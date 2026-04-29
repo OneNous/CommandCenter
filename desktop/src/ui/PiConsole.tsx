@@ -25,7 +25,7 @@ const PRESETS: PiPreset[] = [
     label: 'iccp commission (human)',
     command: 'iccp commission --human',
     group: 'ICCP · ops',
-    hint: 'Legacy section parsing / operator view',
+    hint: 'Plain text in Pi Console (same as SSH default); structured cards need JSONL preset without --human',
   },
   { id: 'iccp-live', label: 'iccp live', command: 'iccp live', group: 'ICCP · telemetry', hint: 'CLI snapshot (Live tab is HTTP JSON)' },
   { id: 'iccp-version', label: 'iccp version', command: 'iccp version', group: 'ICCP · meta' },
@@ -38,6 +38,18 @@ const PRESETS: PiPreset[] = [
 
 const MAX_RUNS = 32
 const CUSTOM_ID = 'custom'
+
+/**
+ * Pi Console expects JSONL from `iccp` for structured cards. Default CLI output is human;
+ * prefix env so presets still get parseable events unless the operator passed `--human`.
+ */
+function commandWithIccpJsonlDefault(cmd: string): string {
+  const t = cmd.trim()
+  if (!/^iccp(\s|$)/i.test(t)) return cmd
+  if (/\s--human(\s|$)/.test(t)) return cmd
+  if (/ICCP_OUTPUT\s*=\s*jsonl/i.test(t)) return cmd
+  return `ICCP_OUTPUT=jsonl ${t}`
+}
 
 /** Presets whose logs should use dashboard-style cards (tag parsing or single card fallback). */
 const OPS_DASH_PRESETS = new Set([
@@ -385,8 +397,9 @@ export function PiConsole({ connected }: Props) {
       setBusyKey(key)
       const start = performance.now()
       try {
+        const remoteCmd = commandWithIccpJsonlDefault(cmd.trim())
         const { result } = await window.iccp.sshExec({
-          command: cmd.trim(),
+          command: remoteCmd,
           wrapEnv,
         })
         const durationMs = Math.round(performance.now() - start)

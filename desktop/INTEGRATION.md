@@ -47,7 +47,7 @@ Tunneling to **`127.0.0.1:<dashboard-port>`** on the Pi is correct for the defau
 
 ### `iccp` CLI output (JSONL vs human)
 
-Recent CoilShield builds default **`iccp`** to **JSONL** on stdout (`iccp.cli.event.v1`, one JSON object per line) so this app’s **Pi console** can parse progress and errors without regex. Operators who want the classic tables and banners should run **`iccp --human …`** (or **`iccp <subcommand> --human`**). The desktop Pi console detects JSONL automatically and renders a structured timeline; `--human` output still uses the legacy section parser.
+CoilShield **`iccp`** defaults to **human** stdout (tags, sections, tables) for SSH and scripts. **JSONL** events (`iccp.cli.event.v1`, one JSON object per line) are opt-in: **`iccp --jsonl …`**, or set **`ICCP_OUTPUT=jsonl`** for that process. This app’s **Pi console** prepends **`ICCP_OUTPUT=jsonl`** for preset `iccp` runs so structured parsing works without changing operator SSH habits. The Pi console detects JSONL automatically and renders a structured timeline; human output still uses the legacy section parser. **`iccp --human`** forces plain text even if the environment requested JSONL.
 
 ### `iccp` / `systemctl` over SSH
 
